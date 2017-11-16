@@ -1,0 +1,8 @@
+type=OLAP
+name=shop
+driver=mondrian.olap4j.MondrianOlap4jDriver
+location=jdbc:mondrian:Jdbc=jdbc:kylin://192.168.1.230:7070/sdk;Catalog=mondrian:///datasources/shop.xml;JdbcDrivers=org.apache.kylin.jdbc.Driver;DynamicSchemaProcessor=mondrian.i18n.LocalizingDynamicSchemaProcessor;Locale=zh_CN;UseContentChecksum=true
+username=ADMIN
+password=KYLIN
+security.enabled=true
+security.type=one2one

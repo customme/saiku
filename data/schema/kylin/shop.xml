@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema name="%{ad_shop}" metamodelVersion="4.0" xmlns="http://mondrian.pentaho.com/schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://mondrian.pentaho.com/schema http://mondrian.pentaho.com/schema/mondrian.xsd">
+
+	<!-- 物理模型 -->
+	<PhysicalSchema>
+		<Table name="DIM_DATE" keyColumn="ID" />
+		<Table name="DIM_COHORT" keyColumn="ID" />
+		<Table name="FACT_NEW_SHOP" />
+		<Table name="FACT_ACTIVE_SHOP" />
+	</PhysicalSchema>
+
+	<!-- 逻辑模型 -->
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" table="DIM_DATE" key="Date" type="TIME" caption="%{date}">
+		<Attributes>
+			<Attribute name="Date" keyColumn="ID" nameColumn="THE_DATE" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 日期间隔维度 -->
+	<Dimension name="DateDiff" table="DIM_COHORT" key="Day" caption="%{date_diff}">
+		<Attributes>
+			<Attribute name="Day" keyColumn="ID" caption="%{day_diff}" />
+		</Attributes>
+	</Dimension>
+
+	<Cube name="Client" caption="%{new_user}">
+		<Dimensions>
+			<Dimension source="Date" caption="%{create_date}" />
+
+			<Dimension name="Channel" table="FACT_NEW_SHOP" caption="%{channel}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="CUSCODE" caption="%{name}" />
+				</Attributes>
+			</Dimension>
+			<Dimension name="Region" table="FACT_NEW_SHOP" caption="%{region}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="CITY" caption="%{name}" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="FACT_NEW_SHOP">
+				<Measures>
+					<!-- 新增用户 -->
+					<Measure name="New User Count" column="AIDID" aggregator="count" formatString="#,###" caption="%{new_user}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="CREATE_DATE" />
+					<FactLink dimension="Channel" />
+					<FactLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+	</Cube>
+
+	<Cube name="Active" caption="%{active_user}">
+		<Dimensions>
+			<Dimension name="ActiveDate" source="Date" caption="%{active_date}" />
+			<Dimension source="DateDiff" />
+
+			<Dimension name="Channel" table="FACT_ACTIVE_SHOP" caption="%{channel}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="CUSCODE" caption="%{name}" />
+				</Attributes>
+			</Dimension>
+			<Dimension name="Region" table="FACT_ACTIVE_SHOP" caption="%{region}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="CITY" caption="%{name}" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="FACT_ACTIVE_SHOP">
+				<Measures>
+					<!-- 活跃用户 -->
+					<Measure name="Active User Count" column="AIDID" aggregator="distinct-count" formatString="#,###" caption="%{active_user}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="ActiveDate" foreignKeyColumn="ACTIVE_DATE" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="DATE_DIFF" />
+					<FactLink dimension="Channel" />
+					<FactLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<!-- 新增用户 -->
+			<CalculatedMember name="New User Count" dimension="Measures" formatString="#,###" caption="%{new_user}">
+				<Formula>[DateDiff].[Day].[0]</Formula>
+			</CalculatedMember>
+			<!-- 新增用户占比 -->
+			<CalculatedMember name="New User Percent" dimension="Measures" formatString="Percent" caption="%{new_user_pct}">
+				<Formula>[Measures].[New User Count] / [Measures].[Active User Count]</Formula>
+			</CalculatedMember>
+			<!-- 累计用户 -->
+			<CalculatedMember name="Addup User Count" dimension="Measures" formatString="#,###" caption="%{addup_user}">
+				<Formula>Aggregate(CrossJoin([DateDiff].[Day].[0], [ActiveDate].[Daily].[2017-05-07] : [ActiveDate].[Daily].CurrentMember))</Formula>
+			</CalculatedMember>
+			<!-- 活跃用户/累计用户 -->
+			<CalculatedMember name="Active Addup Pct" dimension="Measures" formatString="Percent" caption="%{active_addup_pct}">
+				<Formula>[Measures].[Active User Count] / [Measures].[Addup User Count]</Formula>
+			</CalculatedMember>
+			<!-- 历史新增活跃 -->
+			<CalculatedMember name="Hisnew Active Count" dimension="Measures" formatString="#,###" caption="%{hisnew_active_cnt}">
+				<Formula>Iif([Measures].[Active User Count] > [Measures].[New User Count], [Measures].[Active User Count] - [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 历史新增活跃/历史累计用户 -->
+			<CalculatedMember name="Active1 Addup1 Pct" dimension="Measures" formatString="Percent" caption="%{active1_addup1_pct}">
+				<Formula>Iif([Measures].[Hisnew Active Count] > 0, [Measures].[Hisnew Active Count] / ([Measures].[Addup User Count] - [Measures].[New User Count]), NULL)</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+	</Cube>
+
+</Schema>

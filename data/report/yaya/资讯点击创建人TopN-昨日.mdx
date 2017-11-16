@@ -1,0 +1,34 @@
+SELECT
+NON EMPTY {
+    [Measures].[Click Times],
+    [Measures].[Click User Count],
+    [Measures].[Comment Times],
+    [Measures].[Comment User Count],
+	[Measures].[Share Times],
+	[Measures].[Share User Count],
+	[Measures].[Info Title],
+	[Measures].[Info Source],
+	[Measures].[Info IsIndex],
+	[Measures].[Info IsPush]
+} ON COLUMNS,
+NON EMPTY Order(
+	Generate(
+		[Info].[Creater].[Creater].Members,
+		TopCount(
+			[Info].[SrcPlatform].[SrcPlatform].Members *
+			[Info].[Creater].[Creater].CurrentMember *
+			[InfoCategory].[Name].[Name].Members *
+			[Info].[Id].[Id].Members,
+			3,
+			[Measures].[Click User Count]
+		)
+	),
+	[Measures].[Click User Count],
+	DESC
+) ON ROWS
+FROM [Info]
+WHERE (
+	[Info].[Type].[资讯],
+	StrToTuple("[PublishDate].[Daily].[" || Format(Now(), 'yyyy-mm-dd') || "]", [PublishDate].[Daily]).Lag(1),
+	StrToTuple("[StatDate].[Daily].[" || Format(Now(), 'yyyy-mm-dd') || "]", [StatDate].[Daily]).Lag(1)
+)
