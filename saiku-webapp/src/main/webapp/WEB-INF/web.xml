@@ -38,7 +38,7 @@
         <param-name>foodmart.password</param-name>
         <param-value></param-value>
     </context-param>
-    <context-param>
+    <!-- <context-param>
         <param-name>earthquakes.url</param-name>
         <param-value>jdbc:h2:../../data/earthquakes;MODE=MySQL</param-value>
     </context-param>
@@ -49,7 +49,7 @@
     <context-param>
         <param-name>earthquakes.password</param-name>
         <param-value></param-value>
-    </context-param>
+    </context-param> -->
     <context-param>
         <param-name>db.tcpServer</param-name>
         <param-value>-tcpAllowOthers</param-value>
