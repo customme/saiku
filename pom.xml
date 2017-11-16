@@ -18,11 +18,11 @@
         <module>saiku-ui</module>
         <module>saiku-webapp</module>
         <module>saiku-server</module>
-        <module>saiku-bi-platform-plugin-p5</module>
-        <module>saiku-bi-platform-plugin-p6</module>
+        <!--<module>saiku-bi-platform-plugin-p5</module>
+        <module>saiku-bi-platform-plugin-p6</module>-->
     </modules>
 
-    <distributionManagement>
+    <!--<distributionManagement>
         <repository>
             <id>utility</id>
             <name>utility-releases</name>
@@ -33,7 +33,7 @@
             <name>utility-snapshots</name>
             <url>http://repo.meteorite.bi/content/repositories/alabs-snapshot-local/</url>
         </snapshotRepository>
-    </distributionManagement>
+    </distributionManagement>-->
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
@@ -45,22 +45,22 @@
         <tomcat.version>apache-tomcat-7.0.62</tomcat.version>
         <tomcat.source>target/stage/tomcat/</tomcat.source>
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
-        <calcite.version>0.9.2-incubating-SNAPSHOT</calcite.version>
+        <calcite.version>0.9.2-incubating</calcite.version>
         <pentaho.libs.version>TRUNK-SNAPSHOT</pentaho.libs.version>
         <pentaho.platform.version>5.0.0</pentaho.platform.version>
         <serenity.version>1.0.58</serenity.version>
         <jbehave.version>3.9.3</jbehave.version>
     </properties>
     <pluginRepositories>
-        <pluginRepository>
+        <!--<pluginRepository>
             <id>Analytical Labs Plugin Repo</id>
             <name>Analytical Labs Repo-releases</name>
             <url>http://repo.meteorite.bi/content/repositories/alabs-release-local/</url>
-        </pluginRepository>
+        </pluginRepository>-->
     </pluginRepositories>
 
     <repositories>
-        <repository>
+        <!--<repository>
             <id>Analytical Labs Repo</id>
             <name>Analytical Labs Repo-releases</name>
             <url>http://repo.meteorite.bi/content/repositories/alabs-release-local/</url>
@@ -69,23 +69,27 @@
             <id>Analytical Labs snapshots</id>
             <name>Analytical Labs Repo-releases</name>
             <url>http://repo.meteorite.bi/content/repositories/alabs-snapshot-local/</url>
-        </repository>
+        </repository>-->
         <repository>
             <id>pentaho-third-party</id>
-            <url>http://nexus.pentaho.org/content/repositories/proxied-3rd-party-releases/</url>
+            <url>http://nexus.pentaho.org/content/repositories/proxied-pentaho-public-repos-group/</url>
         </repository>
         <repository>
             <id>pentaho-public-release</id>
-            <url>http://nexus.pentaho.org/content/repositories/pentaho-public-release-repos/</url>
+            <url>http://nexus.pentaho.org/content/repositories/proxy-public-release/</url>
         </repository>
         <repository>
             <id>pentaho-snapshot</id>
-            <url>http://nexus.pentaho.org/content/repositories/public-snapshots/</url>
+            <url>http://nexus.pentaho.org/content/repositories/proxy-public-snapshot/</url>
         </repository>
         <!--<repository>
             <id>atlassian2</id>
             <url>http://repository.opencastproject.org/</url>
         </repository>-->
+        <repository>
+        	<id>pentaho</id>
+        	<url>http://repository.pentaho.org/content/groups/omni/</url>
+        </repository>
         <repository>
             <id>central</id>
             <name>Maven Repository Switchboard</name>
@@ -298,16 +302,15 @@
             </modules>
         </profile>
     </profiles>
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>3.8.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
     <dependencyManagement>
         <dependencies>
+        	<dependency>
+				<groupId>jdk.tools</groupId>
+				<artifactId>jdk.tools</artifactId>
+				<version>1.7</version>
+				<scope>system</scope>
+				<systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
+			</dependency>
             <dependency>
                 <groupId>com.sun.jersey.jersey-test-framework</groupId>
                 <artifactId>jersey-test-framework-core</artifactId>
@@ -419,7 +422,7 @@
             <dependency>
                 <groupId>org.olap4j</groupId>
                 <artifactId>olap4j</artifactId>
-                <version>TRUNK-SNAPSHOT</version>
+                <version>1.2.0</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb</groupId>
@@ -447,24 +450,29 @@
                 <version>3.7</version>
             </dependency>
             <dependency>
+                <groupId>xerces</groupId>
+                <artifactId>xercesImpl</artifactId>
+                <version>2.11.0</version>
+            </dependency>
+            <dependency>
                 <groupId>eigenbase</groupId>
                 <artifactId>eigenbase-properties</artifactId>
-                <version>1.1.0.10924</version>
+                <version>1.1.4</version>
             </dependency>
             <dependency>
                 <groupId>eigenbase</groupId>
                 <artifactId>eigenbase-resgen</artifactId>
-                <version>1.3.0.11873</version>
+                <version>1.3.6</version>
             </dependency>
             <dependency>
                 <groupId>eigenbase</groupId>
                 <artifactId>eigenbase-xom</artifactId>
-                <version>1.3.0.11999</version>
+                <version>1.3.5</version>
             </dependency>
             <dependency>
                 <groupId>org.olap4j</groupId>
                 <artifactId>olap4j-xmla</artifactId>
-                <version>TRUNK-SNAPSHOT</version>
+                <version>1.2.0</version>
             </dependency>
             <dependency>
                 <groupId>org.olap4j</groupId>
@@ -684,7 +692,7 @@
             <dependency>
                 <groupId>pentaho</groupId>
                 <artifactId>mondrian</artifactId>
-                <version>4.3.0.1-SPARK</version>
+                <version>4.3.0.1.2-SPARK</version>
             </dependency>
             <!-- Spring modules -->
             <dependency>
@@ -811,7 +819,7 @@
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
-                <version>5.1.17</version>
+                <version>5.1.38</version>
             </dependency>
             <dependency>
                 <groupId>commons-dbcp</groupId>
@@ -841,7 +849,7 @@
             <dependency>
                 <groupId>pentaho</groupId>
                 <artifactId>cpf-core</artifactId>
-                <version>5.2.0.2-84</version>
+                <version>5.4.0.4-149</version>
                 <exclusions>
                     <exclusion>
                         <groupId>janino</groupId>
@@ -852,7 +860,7 @@
             <dependency>
                 <groupId>pentaho</groupId>
                 <artifactId>cpf-pentaho5</artifactId>
-                <version>5.2.0.2-84</version>
+                <version>5.4.0.4-149</version>
                 <exclusions>
                     <exclusion>
                         <groupId>pentaho</groupId>
@@ -983,7 +991,7 @@
             <dependency>
                 <groupId>org.apache.pdfbox</groupId>
                 <artifactId>pdfbox-app</artifactId>
-                <version>2.0.0-SNAPSHOT</version>
+                <version>2.0.5</version>
             </dependency>
             <dependency>
                 <groupId>pentaho</groupId>

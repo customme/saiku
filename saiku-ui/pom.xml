@@ -18,7 +18,7 @@
 				<plugin>
 					<groupId>com.samaxes.maven</groupId>
 					<artifactId>minify-maven-plugin</artifactId>
-					<version>1.7.4-modify</version>
+					<version>1.7.4</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -26,7 +26,7 @@
 			<plugin>
 				<groupId>com.samaxes.maven</groupId>
 				<artifactId>minify-maven-plugin</artifactId>
-				<version>1.7.4-modify</version>
+				<version>1.7.4</version>
 				<executions>
 				<execution>
 				<id>default-minify</id>
@@ -289,16 +289,16 @@
 		</plugins>
 	</build>
      <repositories>
-        <repository>
+        <!--<repository>
             <id>jsdoctk1</id>
             <url>http://jsdoctk-plugin.googlecode.com/svn/repo</url>
-        </repository>
+        </repository>-->
     </repositories>
     <pluginRepositories>
-        <pluginRepository>
+        <!--<pluginRepository>
             <id>jsdoctk2</id>
             <url>http://jsdoctk-plugin.googlecode.com/svn/repo</url>
-        </pluginRepository>
+        </pluginRepository>-->
         <pluginRepository>
             <name>oss.sonatype.org</name>
             <id>oss.sonatype.org</id>
