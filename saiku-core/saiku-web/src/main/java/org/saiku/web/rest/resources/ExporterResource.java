@@ -16,31 +16,11 @@
 package org.saiku.web.rest.resources;
 
 
-import org.saiku.olap.query2.ThinQuery;
-import org.saiku.web.rest.objects.resultset.QueryResult;
-import org.saiku.web.rest.util.ServletUtil;
-import org.saiku.web.svg.Converter;
-
-import com.lowagie.text.Image;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfReader;
-import com.lowagie.text.pdf.PdfStamper;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageTree;
-import org.apache.pdfbox.rendering.PDFRenderer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -48,12 +28,37 @@ import java.util.UUID;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+
+import org.apache.batik.transcoder.TranscoderException;
+import org.apache.batik.transcoder.TranscoderInput;
+import org.apache.batik.transcoder.TranscoderOutput;
+import org.apache.batik.transcoder.image.ImageTranscoder;
+import org.apache.commons.lang.StringUtils;
+import org.saiku.olap.query2.ThinQuery;
+import org.saiku.web.rest.objects.resultset.QueryResult;
+import org.saiku.web.rest.util.ServletUtil;
+import org.saiku.web.svg.Converter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import com.lowagie.text.Document;
+import com.lowagie.text.Image;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfWriter;
 
 /**
  * QueryServlet contains all the methods required when manipulating an OLAP Query.
@@ -261,110 +266,152 @@ public class ExporterResource {
 	@Produces({"image/*" })
 	@Path("/saiku/chart")
 	public Response exportChart(
-			@FormParam("type") @DefaultValue("png")  String type,
-			@FormParam("svg") String svg,
-			@FormParam("size") Integer size,
-			@FormParam("name") String name)
-	{
-		try {
-			final String imageType = type.toUpperCase();
-			Converter converter = Converter.byType("PDF");
-			if (converter == null)
-			{
-				throw new Exception("Image convert is null");
-			}
+            @FormParam("type") @DefaultValue("png")  String type,
+            @FormParam("svg") String svg,
+            @FormParam("size") Integer size,
+            @FormParam("name") String name)
+    {
+        try {
+//            final String imageType = type.toUpperCase();
+            Converter converter = Converter.byType("PDF");
+            if (converter == null)
+            {
+                throw new Exception("Image convert is null");
+            }
 
 
-			//		       resp.setContentType(converter.getContentType());
-			//		       resp.setHeader("Content-disposition", "attachment; filename=chart." + converter.getExtension());
-			//		       final Integer size = req.getParameter("size") != null? Integer.parseInt(req.getParameter("size")) : null;
-			//		       final String svgDocument = req.getParameter("svg");
-			//		       if (svgDocument == null)
-			//		       {
-			//		           resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'svg' parameter");
-			//		           return;
-			//		       }
-			if (StringUtils.isBlank(svg)) {
-				throw new Exception("Missing 'svg' parameter");
-			}
-			final InputStream in = new ByteArrayInputStream(svg.getBytes("UTF-8"));
-			final ByteArrayOutputStream out = new ByteArrayOutputStream();
-			converter.convert(in, out, size);
-			out.flush();
-			byte[] doc = out.toByteArray();
-		  byte[] b = null;
-		  if(getVersion()!=null && !getVersion().contains("EE")) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            //               resp.setContentType(converter.getContentType());
+            //               resp.setHeader("Content-disposition", "attachment; filename=chart." + converter.getExtension());
+            //               final Integer size = req.getParameter("size") != null? Integer.parseInt(req.getParameter("size")) : null;
+            //               final String svgDocument = req.getParameter("svg");
+            //               if (svgDocument == null)
+            //               {
+            //                   resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'svg' parameter");
+            //                   return;
+            //               }
+            if (StringUtils.isBlank(svg)) {
+                throw new Exception("Missing 'svg' parameter");
+            }
+//            final InputStream in = new ByteArrayInputStream(svg.getBytes("UTF-8"));
+//            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+//            converter.convert(in, out, size);
+//            out.flush();
+//            byte[] doc = out.toByteArray();
+//          byte[] b = null;
+          /*if(getVersion()!=null && !getVersion().contains("EE")) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-			PdfReader reader = new PdfReader(doc);
-			PdfStamper pdfStamper = new PdfStamper(reader,
-				baos);
+            PdfReader reader = new PdfReader(doc);
+            PdfStamper pdfStamper = new PdfStamper(reader,
+                baos);
 
-			URL dir_url = ExporterResource.class.getResource("/org/saiku/web/svg/watermark.png");
-			Image image = Image.getInstance(dir_url);
-
-
-			for (int i = 1; i <= reader.getNumberOfPages(); i++) {
-
-			  PdfContentByte content = pdfStamper.getOverContent(i);
+            URL dir_url = ExporterResource.class.getResource("/org/saiku/web/svg/watermark.png");
+            Image image = Image.getInstance(dir_url);
 
 
-			  image.setAbsolutePosition(450f, 280f);
-			/*image.setAbsolutePosition(reader.getPageSize(1).getWidth() - image.getScaledWidth(), reader.getPageSize
-				(1).getHeight() - image.getScaledHeight());*/
-			  //image.setAlignment(Image.MIDDLE);
-			  content.addImage(image);
-			}
-			pdfStamper.close();
-			b = baos.toByteArray();
-		  }
-		  else{
-			b = doc;
-		  }
+            for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+
+              PdfContentByte content = pdfStamper.getOverContent(i);
 
 
-		  if(!type.equals("pdf")) {
+              image.setAbsolutePosition(450f, 280f);
+            image.setAbsolutePosition(reader.getPageSize(1).getWidth() - image.getScaledWidth(), reader.getPageSize
+                (1).getHeight() - image.getScaledHeight());
+              //image.setAlignment(Image.MIDDLE);
+              //content.addImage(image);
+            }
+            pdfStamper.close();
+            b = baos.toByteArray();
+          }
+          else{
+            b = doc;
+          }
+          b=doc;*/
+          svg ="<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + svg;
+          TranscoderInput localTranscoderInput = new TranscoderInput(new StringReader(svg));
+          final BufferedImage[] imagePointer = new BufferedImage[1];
+            ImageTranscoder t = new ImageTranscoder() {
 
-			PDDocument document = PDDocument.load(new ByteArrayInputStream(b), (String)null);
+                @Override
+                public BufferedImage createImage(int w, int h) {
+                    return new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
+                }
 
-			PDPageTree pdPages = document.getDocumentCatalog().getPages();
-			PDPage page = pdPages.get(0);
-			BufferedImage o = new PDFRenderer(document).renderImage(0);
-			ByteArrayOutputStream imgb = new ByteArrayOutputStream();
-			String ct = "";
-			String ext = "";
-			if(type.equals("png")){
-			  ct = "image/png";
-			  ext = "png";
-			}
-			else if(type.equals("jpg")){
-			  ct = "image/jpg";
-			  ext = "jpg";
-			}
-			ImageIO.write(o, type, imgb);
-			byte[] outfile = imgb.toByteArray();
-			if(name == null || name.equals("")){
-			  name = "chart";
-			}
-			return Response.ok(outfile).type(ct).header(
-				"content-disposition",
-				"attachment; filename = "+name+"." + ext).header(
-				"content-length", outfile.length).build();
-		  }
-		  else{
+                @Override
+                public void writeImage(BufferedImage image, TranscoderOutput out)
+                        throws TranscoderException {
+                    imagePointer[0] = image;
+                }
+            };
+            t.transcode(localTranscoderInput, null);  
+            BufferedImage o = imagePointer[0];
+            ByteArrayOutputStream imgb = new ByteArrayOutputStream();
+            
+          if(!type.equals("pdf")) {
+            /*PDDocument document = PDDocument.load(new ByteArrayInputStream(b));
+            PDFTextStripper stripper=new PDFTextStripper();  
+            String s=stripper.getText(document);  
+            System.out.println(s);
+            PDPageTree pdPages = document.getDocumentCatalog().getPages();
+            PDPage page = pdPages.get(0);
+            BufferedImage o = new PDFRenderer(document).renderImage(0);
+            ByteArrayOutputStream imgb = new ByteArrayOutputStream();*/
+                
+            String ct = "";
+            String ext = "";
+            if(type.equals("png")){
+              ct = "image/png";
+              ext = "png";
+            }
+            else if(type.equals("jpg")){
+              ct = "image/jpg";
+              ext = "jpg";
+            }
+            ImageIO.write(o, "png", imgb);
+            byte[] outfile = imgb.toByteArray();
             if(name == null || name.equals("")){
               name = "chart";
             }
-			return Response.ok(b).type(converter.getContentType()).header(
-				"content-disposition",
-				"attachment; filename = "+name+"." + converter.getExtension()).header(
-				"content-length", b.length).build();
-		  }
-		} catch (Exception e) {
-			log.error("Error exporting Chart to  " + type, e);
-			return Response.serverError().entity(e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
-		}
-	}
+            return Response.ok(outfile).type(ct).header(
+                "content-disposition",
+                "attachment; filename = "+name+"." + ext).header(
+                "content-length", outfile.length).build();
+          }
+          else{
+//                PdfReader reader = new PdfReader(doc);
+//                PdfStamper pdfStamper = new PdfStamper(reader,
+//                    baos);
+              ByteArrayOutputStream baos = new ByteArrayOutputStream();
+              Image image = Image.getInstance(o, null);
+              
+              Document doc=new Document();
+              doc.setPageSize(new Rectangle(image.getWidth(),image.getHeight()));
+              PdfWriter writer=PdfWriter.getInstance(doc,baos);
+              doc.open();
+              
+//                PdfContentByte content = pdfStamper.getOverContent(i);                
+              PdfContentByte content = writer.getDirectContent();
+                
+              image.setAbsolutePosition(0, 0);
+              image.setAlignment(Image.MIDDLE);
+              content.addImage(image);
+              
+              doc.close();
+//                pdfStamper.close();
+              byte[] outfile = baos.toByteArray();
+            if(name == null || name.equals("")){
+              name = "chart";
+            }
+            return Response.ok(outfile).type(converter.getContentType()).header(
+                "content-disposition",
+                "attachment; filename = "+name+"." + converter.getExtension()).header(
+                "content-length", outfile.length).build();
+          }
+        } catch (Exception e) {
+            log.error("Error exporting Chart to  " + type, e);
+            return Response.serverError().entity(e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
 
   /**
