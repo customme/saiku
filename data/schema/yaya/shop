@@ -1,0 +1,8 @@
+type=OLAP
+name=shop
+driver=mondrian.olap4j.MondrianOlap4jDriver
+location=jdbc:mondrian:Jdbc=jdbc:mysql://113.106.90.75:3308/ad_dw;Catalog=mondrian:///datasources/shop.xml;DynamicSchemaProcessor=mondrian.i18n.LocalizingDynamicSchemaProcessor;Locale=zh_CN;UseContentChecksum=true
+username=root
+password=fe63266da1@1236489
+security.enabled=true
+security.type=one2one
