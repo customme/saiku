@@ -33,7 +33,7 @@ var Settings = {
     // number of erroneous ajax calls in a row before UI cant recover
     ERROR_TOLERANCE: 3,
     QUERY_PROPERTIES: {
-        'saiku.olap.query.automatic_execution': true,
+        'saiku.olap.query.automatic_execution': false,
         'saiku.olap.query.nonempty': true,
         'saiku.olap.query.nonempty.rows': true,
         'saiku.olap.query.nonempty.columns': true,
@@ -67,7 +67,7 @@ var Settings = {
     TELEMETRY_SERVER: 'http://telemetry.analytical-labs.com:7000',
     LOCALSTORAGE_EXPIRATION: 10 * 60 * 60 * 1000 /* 10 hours, in ms */,
     UPGRADE: true,
-    EVALUATION_PANEL_LOGIN: true,
+    EVALUATION_PANEL_LOGIN: false,
     QUERY_OVERWRITE_WARNING: true,
     MAPS: true,
     MAPS_TYPE: 'OSM', // OSM || GMAPS
