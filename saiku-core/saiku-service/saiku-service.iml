@@ -15,7 +15,7 @@
     <orderEntry type="library" name="Maven: org.saiku:saiku-query:0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.olap4j:olap4j:1.2.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: net.java.dev.javacc:javacc:5.0" level="project" />
-    <orderEntry type="library" name="Maven: pentaho:mondrian:3.6.5" level="project" />
+    <orderEntry type="library" name="Maven: pentaho:mondrian:3.14.0.0-12" level="project" />
     <orderEntry type="library" name="Maven: commons-collections:commons-collections:3.2" level="project" />
     <orderEntry type="library" name="Maven: commons-dbcp:commons-dbcp:1.2.1" level="project" />
     <orderEntry type="library" name="Maven: commons-pool:commons-pool:1.2" level="project" />
