@@ -1,0 +1,9 @@
+-- 一级栏目
+SELECT uuid, customer_id FROM dim_device;
+SELECT deviceid, eventid, version, COUNT(1) click_times FROM event WHERE deviceid > '' AND version > '' AND eventid IN ('Main', 'MyStarFragment', 'Community', 'InteractFragment', 'MyFragment') AND date = '2016-12-17' GROUP BY deviceid, eventid;
+
+-- 二级栏目娱乐、视频
+SELECT deviceid, eventid, acc, version, COUNT(1) click_times FROM event WHERE deviceid > '' AND acc > '' eventid IN ('recreate_sub', 'video_sub') AND date = '2016-12-17' GROUP BY deviceid, eventid, acc;
+
+-- 资讯、视频、帖子、明星模块、明星详情、互动、圈子
+SELECT deviceid, eventid, `date`, COUNT(1) click_times FROM event WHERE deviceid > '' eventid IN ('recreate_click', 'video_click', 'c_post', 'starinfo', 'mystar_detail', 'interact_click', 'c_ring', 'comments', 'share', 'search', 'myinfo', 'm_points', 'm_well', 'm_news') AND deviceid > '' AND `date` >= '2016-12-17' AND `date` <= '2017-01-17' GROUP BY deviceid, `date`;

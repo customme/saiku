@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+<Schema name="%{schema.focus}">
+
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" caption="%{dim.date}">
+		<Hierarchy name="Monthly" primaryKey="date_key" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="base_dw" name="dim_date" />
+			<Level name="Year" column="year_key" uniqueMembers="true" caption="%{dim.date.year}" />
+			<Level name="Quarter" column="quarter_key" uniqueMembers="true" caption="%{dim.date.quarter}" />
+			<Level name="Month" column="month_key" uniqueMembers="true" caption="%{dim.date.month}" />
+			<Level name="Date" column="date_key" uniqueMembers="true" caption="%{dim.date.day}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 日期间隔维度 -->
+	<Dimension name="DateDiff" caption="%{dim.cohort.date}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="base_dw" name="dim_cohort" />
+			<Level name="DayDiff" column="id" uniqueMembers="true" caption="%{dim.cohort.date.daydiff}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 次数维度 -->
+	<Dimension name="Times" caption="%{dim.cohort.times}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="base_dw" name="dim_cohort" />
+			<Level name="Times_1" column="times_1" nameColumn="times_1_name" uniqueMembers="true" caption="%{dim.cohort.times.range_1}" />
+			<Level name="Times" column="id" uniqueMembers="true" caption="%{dim.cohort.times}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 渠道维度 -->
+	<Dimension name="Channel" caption="%{dim.channel}">
+		<Hierarchy primaryKey="channel_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="base_dw" name="dim_channel" />
+			<Level name="Channel" column="channel_name" nameColumn="channel_name" uniqueMembers="true" caption="%{dim.channel.name}" />
+			<Level name="ChannelID" column="channel_id" nameColumn="channel_id" uniqueMembers="true" caption="%{dim.channel.id}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 版本维度 -->
+	<Dimension name="Version" caption="%{dim.version}">
+		<Hierarchy primaryKey="version_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="base_dw" name="dim_version" />
+			<Level name="Version" column="version_id" uniqueMembers="true" caption="%{dim.version.num}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 操作系统维度 -->
+	<Dimension name="OS" caption="%{dim.os}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<InlineTable alias="dim_os">
+				<ColumnDefs>
+					<ColumnDef name="id" type="Integer" />
+					<ColumnDef name="name" type="String" />
+				</ColumnDefs>
+				<Rows>
+					<Row>
+						<Value column="id">0</Value>
+						<Value column="name">Android</Value>
+					</Row>
+					<Row>
+						<Value column="id">1</Value>
+						<Value column="name">iOS</Value>
+					</Row>
+				</Rows>
+			</InlineTable>
+			<Level name="OS" column="id" nameColumn="name" uniqueMembers="true" caption="%{dim.os}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 设备Cube -->
+	<Cube name="Device" caption="%{cube.device}">
+		<Table name="fact_device" />
+
+		<DimensionUsage name="Channel" source="Channel" foreignKey="customer_id" />
+		<DimensionUsage name="InitAppVersion" source="Version" foreignKey="init_app_version" caption="%{dim.version.initial}" />
+		<DimensionUsage name="APPVersion" source="Version" foreignKey="app_version" caption="%{dim.version.current}" />
+		<DimensionUsage name="OS" source="OS" foreignKey="os_type" />
+		<DimensionUsage name="ActivateDate" source="Date" foreignKey="activate_date" caption="%{dim.date.activate}" />
+
+		<Measure name="New User Count" column="uuid" aggregator="count" caption="%{measure.user.count.new}" />
+		<!-- 上期新增 -->
+		<CalculatedMember name="New User Count Prev" dimension="Measures" caption="%{measure.user.count.new.prev}">
+			<Formula>[ActivateDate.Monthly].[Date].CurrentMember.PrevMember</Formula>
+		</CalculatedMember>
+		<!-- 新增环比 -->
+		<CalculatedMember name="New QoQ" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.qoq.new}">
+			<Formula>Iif([Measures].[New User Count Prev] > 0, ([Measures].[New User Count] - [Measures].[New User Count Prev]) / [Measures].[New User Count Prev], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 累计用户 -->
+		<CalculatedMember name="Addup User Count" dimension="Measures" caption="%{measure.user.count.addup}">
+			<Formula>Aggregate([ActivateDate.Monthly].[Date].[2015-05-25] : [ActivateDate.Monthly].[Date].CurrentMember)</Formula>
+		</CalculatedMember>
+
+		<!-- 激活日期最近30天 -->
+		<NamedSet name="Latest ActivateDate 30">
+			<Formula>CurrentDateMember([ActivateDate.Monthly],'"[ActivateDate.Monthly].[Date]"\.[yyyy-mm-dd]').Lead(-30) : CurrentDateMember([ActivateDate.Monthly],'"[ActivateDate.Monthly].[Date]"\.[yyyy-mm-dd]')</Formula>
+		</NamedSet>
+	</Cube>
+
+	<!-- 活跃用户Cube -->
+	<Cube name="ActiveUser" caption="%{cube.active}">
+		<Table name="fact_active" />
+
+		<DimensionUsage name="Channel" source="Channel" foreignKey="customer_id" />
+		<DimensionUsage name="InitAppVersion" source="Version" foreignKey="init_app_version" caption="%{dim.version.initial}" />
+		<DimensionUsage name="APPVersion" source="Version" foreignKey="app_version" caption="%{dim.version.current}" />
+		<DimensionUsage name="OS" source="OS" foreignKey="os_type" />
+		<DimensionUsage name="ActivateDate" source="Date" foreignKey="activate_date" caption="%{dim.date.activate}" />
+		<DimensionUsage name="VisitDate" source="Date" foreignKey="visit_date" caption="%{dim.date.visit}" />
+		<DimensionUsage name="DateDiff" source="DateDiff" foreignKey="day_diff" caption="%{dim.cohort.date}" />
+		<DimensionUsage name="StartTimes" source="Times" foreignKey="start_times" caption="%{dim.cohort.times.start}" />
+
+		<!-- 联网方式 -->
+		<Dimension name="Network" caption="%{device.link_type}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Network" column="link_type" uniqueMembers="true" caption="%{device.link_type}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 访问用户 -->
+		<Measure name="Visit User Count" column="uuid" aggregator="distinct-count" caption="%{measure.user.count.visit}" />
+		<!-- 启动次数 -->
+		<Measure name="Start Times" column="start_times" aggregator="sum" caption="%{measure.user.sum.start_times}" />
+		<!-- 新增用户 -->
+		<CalculatedMember name="New User Count" dimension="Measures" caption="%{measure.user.count.new}">
+			<Formula>[DateDiff].[DayDiff].[0]</Formula>
+		</CalculatedMember>
+		<!-- 活跃用户 -->
+		<CalculatedMember name="Active User Count" dimension="Measures" caption="%{measure.user.count.active}">
+			<Formula>[Measures].[Visit User Count] - [Measures].[New User Count]</Formula>
+		</CalculatedMember>
+		<!-- 新增用户占比 -->
+		<CalculatedMember name="New User Percent" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.new}">
+			<Formula>[Measures].[New User Count] / [Measures].[Visit User Count]</Formula>
+		</CalculatedMember>
+		<!-- 活跃用户占比 -->
+		<CalculatedMember name="Active User Percent" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.active}">
+			<Formula>[Measures].[Active User Count] / [Measures].[Visit User Count]</Formula>
+		</CalculatedMember>
+
+		<!-- 第几日留存率 -->
+		<CalculatedMember name="Keep User Percent" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep}" visible="false">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[DayDiff].CurrentMember / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 次日留存率 -->
+		<CalculatedMember name="Keep User Percent 1" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_1}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[DayDiff].[1] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 2天后留存率 -->
+		<CalculatedMember name="Keep User Percent 2" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_2}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[2] : [DateDiff].[DayDiff].[100]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 3天后留存率 -->
+		<CalculatedMember name="Keep User Percent 3" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_3}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[3] : [DateDiff].[DayDiff].[100]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 4天后留存率 -->
+		<CalculatedMember name="Keep User Percent 4" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_4}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[4] : [DateDiff].[DayDiff].[100]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 5天后留存率 -->
+		<CalculatedMember name="Keep User Percent 5" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_5}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[5] : [DateDiff].[DayDiff].[100]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 6天后留存率 -->
+		<CalculatedMember name="Keep User Percent 6" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_6}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[6] : [DateDiff].[DayDiff].[100]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 7天后留存率 -->
+		<CalculatedMember name="Keep User Percent 7" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_7}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[7] : [DateDiff].[DayDiff].[100]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 14天后留存率 -->
+		<CalculatedMember name="Keep User Percent 14" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_14}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[14] : [DateDiff].[DayDiff].[100]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 30天后留存率 -->
+		<CalculatedMember name="Keep User Percent 30" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_30}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[30] : [DateDiff].[DayDiff].[100]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+
+		<!-- 7日内留存率 -->
+		<CalculatedMember name="Keep User Percent In 7" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_in_7}">
+			<Formula>Iif((NOT [ActivateDate.Monthly].CurrentMember.Level IS [ActivateDate.Monthly].[Date] OR DateDiff('d', CDate([ActivateDate.Monthly].[Date].CurrentMember.Name), NOW()) > 2) AND [Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[1] : [DateDiff].[DayDiff].[7]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 14日内留存率 -->
+		<CalculatedMember name="Keep User Percent In 14" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_in_14}">
+			<Formula>Iif((NOT [ActivateDate.Monthly].CurrentMember.Level IS [ActivateDate.Monthly].[Date] OR DateDiff('d', CDate([ActivateDate.Monthly].[Date].CurrentMember.Name), NOW()) > 8) AND [Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[1] : [DateDiff].[DayDiff].[14]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 30日内留存率 -->
+		<CalculatedMember name="Keep User Percent In 30" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_in_30}">
+			<Formula>Iif((NOT [ActivateDate.Monthly].CurrentMember.Level IS [ActivateDate.Monthly].[Date] OR DateDiff('d', CDate([ActivateDate.Monthly].[Date].CurrentMember.Name), NOW()) > 15) AND [Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[1] : [DateDiff].[DayDiff].[30]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 60日内留存率 -->
+		<CalculatedMember name="Keep User Percent In 60" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_in_60}">
+			<Formula>Iif((NOT [ActivateDate.Monthly].CurrentMember.Level IS [ActivateDate.Monthly].[Date] OR DateDiff('d', CDate([ActivateDate.Monthly].[Date].CurrentMember.Name), NOW()) > 31) AND [Measures].[New User Count] > 0, Aggregate([DateDiff].[DayDiff].[1] : [DateDiff].[DayDiff].[60]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+
+		<!-- 激活日期最近30天 -->
+		<NamedSet name="Latest ActivateDate 30">
+			<Formula>CurrentDateMember([ActivateDate.Monthly],'"[ActivateDate.Monthly].[Date]"\.[yyyy-mm-dd]').Lead(-30) : CurrentDateMember([ActivateDate.Monthly],'"[ActivateDate.Monthly].[Date]"\.[yyyy-mm-dd]')</Formula>
+		</NamedSet>
+		<!-- 访问日期最近30天 -->
+		<NamedSet name="Latest VisitDate 30">
+			<Formula>CurrentDateMember([VisitDate.Monthly],'"[VisitDate.Monthly].[Date]"\.[yyyy-mm-dd]').Lead(-30) : CurrentDateMember([VisitDate.Monthly],'"[VisitDate.Monthly].[Date]"\.[yyyy-mm-dd]')</Formula>
+		</NamedSet>
+	</Cube>
+
+	<!-- 角色权限 -->
+	<!-- 广告运营 -->
+	<Role name="ROLE_ADOP">
+		<SchemaGrant access="none" />
+	</Role>
+
+	<!-- 产品运营 -->
+	<Role name="ROLE_POP">
+		<SchemaGrant access="none" />
+	</Role>
+
+</Schema>

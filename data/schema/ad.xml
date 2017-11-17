@@ -1,0 +1,605 @@
+<?xml version="1.0"?>
+<Schema name="%{schema.ad}">
+
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" caption="%{dim.date}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="sdk_dw" name="dim_date" />
+			<Level name="Year" column="the_year" uniqueMembers="true" caption="%{dim.date.year}" />
+			<Level name="Quarter" column="the_quarter" uniqueMembers="true" caption="%{dim.date.quarter}" />
+			<Level name="Month" column="the_month" uniqueMembers="true" caption="%{dim.date.month}" />
+			<Level name="Day" column="the_day" uniqueMembers="true" caption="%{dim.date.day}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 日期间隔维度 -->
+	<Dimension name="DateDiff" caption="%{dim.cohort.date}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="sdk_dw" name="dim_cohort" />
+			<Level name="Day" column="id" uniqueMembers="true" caption="%{dim.cohort.date.day}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 渠道维度 -->
+	<Dimension name="Channel" caption="%{dim.channel}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="sdk_dw" name="dim_channel" />
+			<Level name="Name" column="channel_name" uniqueMembers="true" caption="%{dim.channel.name}" />
+			<Level name="Code" column="id" uniqueMembers="true" caption="%{dim.channel.code}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- App版本维度 -->
+	<Dimension name="Version" caption="%{dim.version}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table schema="sdk_dw" name="dim_version" />
+			<Level name="No" column="version_no" uniqueMembers="true" caption="%{dim.version.no}" />
+			<Level name="Name" column="id" uniqueMembers="true" caption="%{dim.version.name}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 设备维度 -->
+	<Dimension name="Device" caption="%{dim.device}">
+		<!-- 客户 -->
+		<Hierarchy name="Custom" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="custom_id" uniqueMembers="true" caption="%{dim.channel.id}" />
+		</Hierarchy>
+		<!-- 品牌 -->
+		<Hierarchy name="Brand" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="brand" uniqueMembers="true" caption="%{dim.device.brand}" />
+		</Hierarchy>
+		<!-- 地区 -->
+		<Hierarchy name="Region" primaryKey="device_id" primaryKeyTable="dim_device" hasAll="true" allLevelName="%{dim.all}">
+			<Join leftKey="city_id" rightKey="id">
+				<Table name="dim_device" alias="a" />
+				<Table name="dim_city" alias="b" />
+			</Join>
+			<Level name="Name" table="b" column="name" uniqueMembers="true" caption="%{dim.region.city}" />
+		</Hierarchy>
+		<!-- 机型 -->
+		<Hierarchy name="Model" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="model" uniqueMembers="true" caption="%{dim.device.model}" />
+		</Hierarchy>
+		<!-- 网络类型 -->
+		<Hierarchy name="Network" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}" allMemberCaption="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="nettype" uniqueMembers="true" caption="%{dim.device.network}">
+				<NameExpression>
+					<SQL dialect="mysql">CASE nettype WHEN 1 THEN 'wifi' WHEN 2 THEN 'gprs' ELSE '其他' END</SQL>
+				</NameExpression>
+			</Level>
+		</Hierarchy>
+		<!-- 分辨率 -->
+		<Hierarchy name="Resolution" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="src" uniqueMembers="true" caption="%{dim.device.resolution}" />
+		</Hierarchy>
+		<!-- 系统版本 -->
+		<Hierarchy name="Sysver" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="sysver" uniqueMembers="true" caption="%{dim.platform.version}" />
+		</Hierarchy>
+		<!-- 客户端版本 -->
+		<Hierarchy name="Version" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="version" uniqueMembers="true" caption="%{dim.version.current}" />
+		</Hierarchy>
+		<!-- 客户端初始版本 -->
+		<Hierarchy name="InitVersion" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="init_version" uniqueMembers="true" caption="%{dim.version.initial}" />
+		</Hierarchy>
+		<!-- app路径 -->
+		<Hierarchy name="AppPath" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Name" column="app_path" uniqueMembers="true" caption="%{dim.app.pkg_path}">
+				<NameExpression>
+					<SQL dialect="mysql">CASE app_path WHEN 1 THEN 'system目录' WHEN 2 THEN 'data目录' WHEN 3 THEN 'sd卡目录' WHEN 4 THEN 'vendor目录' ELSE '其他' END</SQL>
+				</NameExpression>
+			</Level>
+		</Hierarchy>
+		<!-- 是否root -->
+		<Hierarchy name="Root" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" />
+			<Level name="Is" column="is_root" uniqueMembers="true" caption="%{dim.device.is_root}">
+				<NameExpression>
+					<SQL dialect="mysql">IF(is_root = 1, '是', '否')</SQL>
+				</NameExpression>
+			</Level>
+		</Hierarchy>
+		<!-- 是否为平板 -->
+		<Hierarchy name="Pad" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" alias="pad" />
+			<Level name="Is" uniqueMembers="true" caption="%{dim.device.is_pad}">
+				<KeyExpression>
+					<SQL dialect="mysql">IF(pad.imsi > '', 0, 1)</SQL>
+				</KeyExpression>
+				<NameExpression>
+					<SQL dialect="mysql">IF(pad.imsi > '', '否', '是')</SQL>
+				</NameExpression>
+			</Level>
+		</Hierarchy>
+		<!-- 是否升级 -->
+		<Hierarchy name="Upgrade" primaryKey="device_id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_device" alias="upgrade" />
+			<Level name="Is" uniqueMembers="true" caption="%{dim.app.upgrade}">
+				<KeyExpression>
+					<SQL dialect="mysql">IF(upgrade.version = upgrade.init_version, 1, 0)</SQL>
+				</KeyExpression>
+				<NameExpression>
+					<SQL dialect="mysql">IF(upgrade.version = upgrade.init_version, '是', '否')</SQL>
+				</NameExpression>
+			</Level>
+		</Hierarchy>
+	</Dimension>
+	
+	<!-- 广告维度 -->
+	<Dimension name="Ad" caption="%{dim.ad}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_ad" alias="t" />
+			<Level name="Type" table="t" column="advtype" uniqueMembers="true" caption="%{dim.ad.type}">
+				<NameExpression>
+					<SQL dialect="mysql">CASE t.advtype WHEN 1 THEN '开屏' WHEN 2 THEN '锁屏' WHEN 3 THEN '弹框' WHEN 4 THEN '通知栏' ELSE '其他' END </SQL>
+				</NameExpression>
+			</Level>
+			<Level name="Name" column="name" uniqueMembers="true" caption="%{dim.ad.name}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 资源 -->
+	<Dimension name="Resource" caption="%{dim.resource}">
+		<Hierarchy primaryKey="id" primaryKeyTable="dim_ad" hasAll="true" allLevelName="%{dim.all}">
+			<Join leftKey="resoid" rightKey="id">
+				<Table name="dim_ad" alias="a" />
+				<Table name="dim_resource" alias="b" />
+			</Join>
+			<Level name="Source" table="b" column="sdktype" uniqueMembers="true" caption="%{dim.ad.resource.source}">
+				<NameExpression>
+					<SQL dialect="mysql">CASE b.sdktype WHEN 1 THEN 'zephyr' WHEN 2 THEN 'mobking' WHEN 4 THEN 'ozero' WHEN 5 THEN 'wingmobi' ELSE '自主运营' END</SQL>
+				</NameExpression>
+			</Level>
+			<Level name="Type" table="b" column="restype" uniqueMembers="false" caption="%{dim.ad.resource.type}">
+				<NameExpression>
+					<SQL dialect="mysql">CASE b.restype WHEN 1 THEN 'apk' WHEN 2 THEN 'wap' ELSE '其他' END</SQL>
+				</NameExpression>
+			</Level>
+			<Level name="Name" table="b" column="name" uniqueMembers="false" caption="%{dim.ad.resource.name}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 活跃用户Cube -->
+	<Cube name="Active" caption="%{cube.active}">
+		<Table name="fact_active" />
+
+		<!-- 地区 -->
+		<Dimension name="Region" foreignKey="city_id" caption="%{dim.region}">
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<Table name="dim_city" />
+				<Level name="City" column="name" uniqueMembers="true" caption="%{dim.region.city}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 机型 -->
+		<Dimension name="Model" caption="%{dim.device.model}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="model" uniqueMembers="true" caption="%{dim.device.model}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 网络类型 -->
+		<Dimension name="Network" caption="%{dim.device.network}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="nettype" uniqueMembers="true" caption="%{dim.device.network}">
+					<NameExpression>
+						<SQL dialect="mysql">CASE nettype WHEN 1 THEN 'wifi' WHEN 2 THEN 'gprs' ELSE '其他' END</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 分辨率 -->
+		<Dimension name="Resolution" caption="%{dim.device.resolution}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="src" uniqueMembers="true" caption="%{dim.device.resolution}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 系统版本 -->
+		<Dimension name="Sysver" caption="%{dim.platform.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="sysver" uniqueMembers="true" caption="%{dim.platform.version}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 客户端版本 -->
+		<Dimension name="Version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="version" uniqueMembers="true" caption="%{dim.version.name}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 是否root -->
+		<Dimension name="Root" caption="%{dim.device.is_root}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Is" column="is_root" uniqueMembers="true" caption="%{dim.device.is_root}">
+					<NameExpression>
+						<SQL dialect="mysql">IF(is_root = 1, '是', '否')</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Device" source="Device" foreignKey="device_id" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" caption="%{dim.date.create}" />
+		<DimensionUsage name="ActiveDate" source="Date" foreignKey="active_date" caption="%{dim.date.active}" />
+		<DimensionUsage name="DateDiff" source="DateDiff" foreignKey="date_diff" />
+
+		<!-- 活跃用户 -->
+		<Measure name="Active User Count" column="device_id" aggregator="distinct-count" formatString="#,###" caption="%{measure.user.count.active}" />
+		<!-- 新增用户 -->
+		<CalculatedMember name="New User Count" dimension="Measures" formatString="#,###" caption="%{measure.user.count.new}">
+			<Formula>[DateDiff].[Day].[0]</Formula>
+		</CalculatedMember>
+		<!-- 新增用户占比 -->
+		<CalculatedMember name="New User Percent" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.new}">
+			<Formula>[Measures].[New User Count] / [Measures].[Active User Count]</Formula>
+		</CalculatedMember>
+
+		<!-- 第几日留存率 -->
+		<CalculatedMember name="Keep User Percent" dimension="Measures" formatString="Percent" visible="false" caption="%{measure.user.percent.keep}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].CurrentMember / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 次日留存率 -->
+		<CalculatedMember name="Keep User Percent 1" dimension="Measures" caption="%{measure.user.percent.keep_1}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[1] / [Measures].[New User Count], NULL)</Formula>
+			<CalculatedMemberProperty name="FORMAT_STRING" expression="Iif([Measures].[Keep User Percent 1] &lt; 0.2, '|0.00%|style=red', '|0.00%|')" />
+		</CalculatedMember>
+		<!-- 2日留存率 -->
+		<CalculatedMember name="Keep User Percent 2" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_2}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[2] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 3日留存率 -->
+		<CalculatedMember name="Keep User Percent 3" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_3}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[3] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 4日留存率 -->
+		<CalculatedMember name="Keep User Percent 4" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_4}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[4] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 5日留存率 -->
+		<CalculatedMember name="Keep User Percent 5" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_5}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[5] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 6日留存率 -->
+		<CalculatedMember name="Keep User Percent 6" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_6}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[6] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 7日留存率 -->
+		<CalculatedMember name="Keep User Percent 7" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_7}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[7] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 14日留存率 -->
+		<CalculatedMember name="Keep User Percent 14" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_14}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[14] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 30日留存率 -->
+		<CalculatedMember name="Keep User Percent 30" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_30}">
+			<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[30] / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+
+		<!-- 3日内留存率 -->
+		<CalculatedMember name="Keep User Percent In 3" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_in_3}">
+			<Formula>
+Iif(
+	(
+		NOT [CreateDate].CurrentMember.Level IS [CreateDate].[Day]
+		OR DateDiff('d', CDate([CreateDate].[Day].CurrentMember.Name), NOW()) > 2
+	)
+	AND [Measures].[New User Count] > 0,
+	Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[3]) / [Measures].[New User Count],
+	NULL
+)
+			</Formula>
+		</CalculatedMember>
+		<!-- 7日内留存率 -->
+		<CalculatedMember name="Keep User Percent In 7" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_in_7}">
+			<Formula>
+Iif(
+	(
+		NOT [CreateDate].CurrentMember.Level IS [CreateDate].[Day]
+		OR DateDiff('d', CDate([CreateDate].[Day].CurrentMember.Name), NOW()) > 4
+	)
+	AND [Measures].[New User Count] > 0,
+	Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[7]) / [Measures].[New User Count],
+	NULL
+)
+			</Formula>
+		</CalculatedMember>
+		<!-- 14日内留存率 -->
+		<CalculatedMember name="Keep User Percent In 14" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_in_14}">
+			<Formula>
+Iif(
+	(
+		NOT [CreateDate].CurrentMember.Level IS [CreateDate].[Day]
+		OR DateDiff('d', CDate([CreateDate].[Day].CurrentMember.Name), NOW()) > 8
+	)
+	AND [Measures].[New User Count] > 0,
+	Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[14]) / [Measures].[New User Count],
+	NULL
+)
+			</Formula>
+		</CalculatedMember>
+		<!-- 30日内留存率 -->
+		<CalculatedMember name="Keep User Percent In 30" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_in_30}">
+			<Formula>
+Iif(
+	(
+		NOT [CreateDate].CurrentMember.Level IS [CreateDate].[Day]
+		OR DateDiff('d', CDate([CreateDate].[Day].CurrentMember.Name), NOW()) > 15
+	)
+	AND [Measures].[New User Count] > 0,
+	Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[30]) / [Measures].[New User Count],
+	NULL
+)
+			</Formula>
+		</CalculatedMember>
+
+		<!-- 7天后留存率 -->
+		<CalculatedMember name="Keep User Percent After 7" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_7}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[7] : [DateDiff].[Day].[180]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 14天后留存率 -->
+		<CalculatedMember name="Keep User Percent After 14" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_14}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[14] : [DateDiff].[Day].[180]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 30天后留存率 -->
+		<CalculatedMember name="Keep User Percent After 30" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_30}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[30] : [DateDiff].[Day].[180]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+		<!-- 60天后留存率 -->
+		<CalculatedMember name="Keep User Percent After 60" dimension="Measures" formatString="Percent" caption="%{measure.user.percent.keep_after_60}">
+			<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[60] : [DateDiff].[Day].[180]) / [Measures].[New User Count], NULL)</Formula>
+		</CalculatedMember>
+
+		<!-- 创建日期最近30天 -->
+		<NamedSet name="CreateDate 30">
+			<Formula>CurrentDateMember([CreateDate], '"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-31) : CurrentDateMember([CreateDate], '"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)</Formula>
+		</NamedSet>
+		<!-- 活跃日期最近30天 -->
+		<NamedSet name="ActiveDate 30">
+			<Formula>CurrentDateMember([ActiveDate], '"[ActiveDate].[Day]"\.[yyyy-mm-dd]').Lead(-31) : CurrentDateMember([ActiveDate], '"[ActiveDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)</Formula>
+		</NamedSet>
+	</Cube>
+
+	<!-- 广告-下发 -->
+	<Cube name="AdSend" caption="%{cube.ad.send}">
+		<Table name="fact_ad_send" />
+
+		<!-- 地区 -->
+		<Dimension name="Region" foreignKey="city_id" caption="%{dim.region}">
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<Table name="dim_city" />
+				<Level name="City" column="name" uniqueMembers="true" caption="%{dim.region.city}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 网络类型 -->
+		<Dimension name="Network" caption="%{dim.device.network}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="nettype" uniqueMembers="true" caption="%{dim.device.network}">
+					<NameExpression>
+						<SQL dialect="mysql">CASE nettype WHEN 1 THEN 'wifi' WHEN 2 THEN 'gprs' ELSE '其他' END</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 客户端版本 -->
+		<Dimension name="Version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="version" uniqueMembers="true" caption="%{dim.version.name}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 时段 -->
+		<Dimension name="Hour" caption="%{dim.time}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="create_hour" uniqueMembers="true" caption="%{dim.time.hour}" />
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Ad" source="Ad" foreignKey="ad_id" />
+		<DimensionUsage name="Resource" source="Resource" foreignKey="ad_id" />
+		<DimensionUsage name="Device" source="Device" foreignKey="device_id" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" caption="%{dim.date.send}" />
+
+		<!-- 下发个数 -->
+		<Measure name="Send Count" aggregator="sum" formatString="#,###" caption="%{measure.ad.count.send}">
+			<MeasureExpression>
+				<SQL dialect="mysql">IF(send_count > 0, 1, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+	</Cube>
+
+	<!-- 广告-展示 -->
+	<Cube name="AdShow" caption="%{cube.ad.show}">
+		<Table name="fact_ad_show" />
+
+		<!-- 地区 -->
+		<Dimension name="Region" foreignKey="city_id" caption="%{dim.region}">
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<Table name="dim_city" />
+				<Level name="City" column="name" uniqueMembers="true" caption="%{dim.region.city}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 网络类型 -->
+		<Dimension name="Network" caption="%{dim.device.network}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="nettype" uniqueMembers="true" caption="%{dim.device.network}">
+					<NameExpression>
+						<SQL dialect="mysql">CASE nettype WHEN 1 THEN 'wifi' WHEN 2 THEN 'gprs' ELSE '其他' END</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 客户端版本 -->
+		<Dimension name="Version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="version" uniqueMembers="true" caption="%{dim.version.name}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 时段 -->
+		<Dimension name="Hour" caption="%{dim.time}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="create_hour" uniqueMembers="true" caption="%{dim.time.hour}" />
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Ad" source="Ad" foreignKey="ad_id" />
+		<DimensionUsage name="Resource" source="Resource" foreignKey="ad_id" />
+		<DimensionUsage name="Device" source="Device" foreignKey="device_id" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" caption="%{dim.date.feedback}" />
+		<DimensionUsage name="SendDate" source="Date" foreignKey="send_date" caption="%{dim.date.send}" />
+
+		<!-- 展示个数 -->
+		<Measure name="Show Count" aggregator="sum" formatString="#,###" caption="%{measure.ad.count.show}">
+			<MeasureExpression>
+				<SQL dialect="mysql">IF(show_count > 0, 1, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+	</Cube>
+
+	<!-- 广告-点击 -->
+	<Cube name="AdClick" caption="%{cube.ad.click}">
+		<Table name="fact_ad_click" />
+
+		<!-- 地区 -->
+		<Dimension name="Region" foreignKey="city_id" caption="%{dim.region}">
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<Table name="dim_city" />
+				<Level name="City" column="name" uniqueMembers="true" caption="%{dim.region.city}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 网络类型 -->
+		<Dimension name="Network" caption="%{dim.device.network}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="nettype" uniqueMembers="true" caption="%{dim.device.network}">
+					<NameExpression>
+						<SQL dialect="mysql">CASE nettype WHEN 1 THEN 'wifi' WHEN 2 THEN 'gprs' ELSE '其他' END</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 客户端版本 -->
+		<Dimension name="Version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="version" uniqueMembers="true" caption="%{dim.version.name}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 时段 -->
+		<Dimension name="Hour" caption="%{dim.time}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="create_hour" uniqueMembers="true" caption="%{dim.time.hour}" />
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Ad" source="Ad" foreignKey="ad_id" />
+		<DimensionUsage name="Resource" source="Resource" foreignKey="ad_id" />
+		<DimensionUsage name="Device" source="Device" foreignKey="device_id" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" caption="%{dim.date.feedback}" />
+		<DimensionUsage name="SendDate" source="Date" foreignKey="send_date" caption="%{dim.date.send}" />
+
+		<!-- 点击个数 -->
+		<Measure name="Click Count" aggregator="sum" formatString="#,###" caption="%{measure.ad.count.click}">
+			<MeasureExpression>
+				<SQL dialect="mysql">IF(click_count > 0, 1, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+	</Cube>
+
+	<!-- 广告-安装 -->
+	<Cube name="AdInstall" caption="%{cube.ad.install}">
+		<Table name="fact_ad_install" />
+
+		<!-- 地区 -->
+		<Dimension name="Region" foreignKey="city_id" caption="%{dim.region}">
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<Table name="dim_city" />
+				<Level name="City" column="name" uniqueMembers="true" caption="%{dim.region.city}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 网络类型 -->
+		<Dimension name="Network" caption="%{dim.device.network}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="nettype" uniqueMembers="true" caption="%{dim.device.network}">
+					<NameExpression>
+						<SQL dialect="mysql">CASE nettype WHEN 1 THEN 'wifi' WHEN 2 THEN 'gprs' ELSE '其他' END</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 客户端版本 -->
+		<Dimension name="Version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="version" uniqueMembers="true" caption="%{dim.version.name}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 时段 -->
+		<Dimension name="Hour" caption="%{dim.time}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="create_hour" uniqueMembers="true" caption="%{dim.time.hour}" />
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Ad" source="Ad" foreignKey="ad_id" />
+		<DimensionUsage name="Resource" source="Resource" foreignKey="ad_id" />
+		<DimensionUsage name="Device" source="Device" foreignKey="device_id" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" caption="%{dim.date.feedback}" />
+		<DimensionUsage name="SendDate" source="Date" foreignKey="send_date" caption="%{dim.date.send}" />
+
+		<!-- 安装个数 -->
+		<Measure name="Install Count" aggregator="sum" formatString="#,###" caption="%{measure.ad.count.install}">
+			<MeasureExpression>
+				<SQL dialect="mysql">IF(install_count > 0, 1, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+	</Cube>
+
+	<!-- 运营 -->
+	<Cube name="Op" caption="%{cube.op}">
+		<Table name="fact_op" />
+
+		<!-- 运营条件 -->
+		<Dimension name="Level" foreignKey="run_level" caption="%{dim.op.level}">
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<Table name="dim_level" />
+				<Level name="Name" column="name" uniqueMembers="true" caption="%{dim.op.level.filter}" />
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Device" source="Device" foreignKey="device_id" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" caption="%{dim.date.create}" />
+
+		<Measure name="User Count" column="device_id" aggregator="distinct-count" formatString="#,###" caption="%{measure.user.count}" />
+	</Cube>
+
+	<!-- 角色权限 -->
+	<!-- 产品运营 -->
+	<Role name="ROLE_POP">
+		<SchemaGrant access="none" />
+	</Role>
+
+</Schema>

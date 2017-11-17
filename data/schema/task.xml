@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<Schema name="%{schema.task}">
+
+	<!-- 任务Cube -->
+	<Cube name="Task" caption="%{cube.task}">
+		<Table name="t_task_pool" />
+
+		<!-- 运行时间 -->
+		<Dimension name="RunTime" caption="%{task.run_time}">
+			<Hierarchy name="Daily" hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Date" uniqueMembers="true" caption="%{dim.date}">
+					<KeyExpression>
+						<SQL dialect="mysql">DATE(run_time)</SQL>
+					</KeyExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 任务状态 -->
+		<Dimension name="TaskState" caption="%{task.state}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="State" uniqueMembers="true" caption="%{task.state}">
+					<KeyExpression>
+						<SQL dialect="mysql">
+CASE task_state 
+WHEN 0 THEN '等待'
+WHEN 1 THEN '就绪'
+WHEN 2 THEN '正在运行'
+WHEN 3 THEN '已经分配'
+WHEN 6 THEN '运行成功'
+WHEN 9 THEN '运行失败'
+ELSE '未知' END
+						</SQL>
+					</KeyExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 任务ID -->
+		<Dimension name="TaskID" caption="%{task.id}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="ID" column="task_id" uniqueMembers="true" caption="%{task.id}">
+					<Property name="Priority" column="priority" />
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 任务数 -->
+		<Measure name="Task Count" column="task_id" aggregator="count" caption="%{measure.task.count}" />
+		<!-- 任务耗时（秒） -->
+		<Measure name="Run Time" aggregator="sum" caption="%{measure.task.run_time}">
+			<MeasureExpression>
+				<SQL dialect="mysql">TIMESTAMPDIFF(SECOND, start_time, end_time)</SQL>
+			</MeasureExpression>
+		</Measure>
+	</Cube>
+
+	<!-- 角色权限 -->
+	<!-- 广告运营 -->
+	<Role name="ROLE_ADOP">
+		<SchemaGrant access="none" />
+	</Role>
+
+	<!-- 产品运营 -->
+	<Role name="ROLE_POP">
+		<SchemaGrant access="none" />
+	</Role>
+
+</Schema>

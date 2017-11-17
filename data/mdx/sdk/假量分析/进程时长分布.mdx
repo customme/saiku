@@ -1,0 +1,58 @@
+WITH MEMBER [Measures].[未知占比] AS
+[Runtime].[未知] / [Runtime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[~1分占比] AS
+[Runtime].[~1分] / [Runtime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+// 用户数大于50，且未知+~1分占比大于90%
+MEMBER [Measures].[未知+~1分占比] AS
+([Runtime].[未知] + [Runtime].[~1分]) / [Runtime].DefaultMember,
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[未知+~1分占比] > 0.9,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+MEMBER [Measures].[1~10分占比] AS
+[Runtime].[1~10分] / [Runtime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[10~30分占比] AS
+[Runtime].[10~30分] / [Runtime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[30~120分占比] AS
+[Runtime].[30~120分] / [Runtime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[2小时~占比] AS
+[Runtime].[2小时~] / [Runtime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+SELECT
+NON EMPTY {
+    [Measures].[User Count],
+    [Measures].[未知占比],
+    [Measures].[~1分占比],
+    [Measures].[未知+~1分占比],
+    [Measures].[1~10分占比],
+    [Measures].[10~30分占比],
+    [Measures].[30~120分占比],
+	[Measures].[2小时~占比]
+} ON COLUMNS,
+NON EMPTY {
+    Order(
+		[Channel].[Code].Members,
+		[Measures].[~1分占比],
+		DESC
+	)
+} ON ROWS
+FROM [Device]
+WHERE {
+	CrossJoin(
+        [Device.Platform].[android],
+        {CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)}
+    )
+}

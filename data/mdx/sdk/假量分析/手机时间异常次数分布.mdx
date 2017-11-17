@@ -1,0 +1,43 @@
+WITH MEMBER [Measures].[0次占比] AS
+[Etime].[0次] / [Etime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[1次占比] AS
+[Etime].[1次] / [Etime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[2次占比] AS
+[Etime].[2次] / [Etime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+// 用户数大于50，且3次+占比大于5%
+MEMBER [Measures].[3次+占比] AS
+[Etime].[3次+] / [Etime].DefaultMember,
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[3次+占比] > 0.05,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+SELECT
+NON EMPTY {
+    [Measures].[User Count],
+    [Measures].[0次占比],
+    [Measures].[1次占比],
+    [Measures].[2次占比],
+    [Measures].[3次+占比]
+} ON COLUMNS,
+NON EMPTY {
+    Order(
+        [Channel].[Code].Members,
+    	[Measures].[3次+占比],
+		DESC
+	)
+} ON ROWS
+FROM [Device]
+WHERE {
+    CrossJoin(
+        [Device.Platform].[android],
+        {CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)}
+    )
+}

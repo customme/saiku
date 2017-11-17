@@ -1,0 +1,22 @@
+type=OLAP
+name=sdk_dw
+driver=mondrian.olap4j.MondrianOlap4jDriver
+Locale=zh_CN
+DynamicSchemaProcessor=mondrian.i18n.LocalizingDynamicSchemaProcessor
+location=jdbc:mondrian:Jdbc=jdbc:mysql://192.168.1.205:3306/sdk_dw?user=root&password=mysql;Catalog=res:jiuzhi/sdk.xml;
+location=jdbc:mondrian:Jdbc=jdbc:mysql://10.10.10.172:3306/sdk_dw?user=root&password=xcHu5r5kNz2j5izr;Catalog=res:jiuzhi/sdk.xml;
+username=root
+password=xcHu5r5kNz2j5izr
+
+# some security configuration for roles, first enable it
+security.enabled=true
+
+# there are 3 different types of security:
+# "one2one" (try and map spring user roles to mondrian roles), 
+# "lookup" (define the mapping of spring and mondrian roles manually) 
+# "passthrough" (will pass username + password of logged in user to connection, e.g. jdbc user + password)
+
+security.type=one2one
+
+# security.type=lookup
+# security.mapping=springRole=mondrianRole1;springRole2=mondrianRole2

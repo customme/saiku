@@ -1,0 +1,63 @@
+// 用户数大于50，且VPN用户占比大于10%
+WITH MEMBER [Measures].[VPN用户占比] AS
+[Device.VPN].[是] / [Device.VPN].DefaultMember,
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[VPN用户占比] > 0.1,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+MEMBER [Measures].[移动用户数] AS
+[Device.ISP].[中国移动]
+
+// 用户数大于50，且移动用户占比小于50%
+MEMBER [Measures].[移动用户占比] AS
+Iif(
+    IsEmpty([Measures].[移动用户数]),
+    0,
+	[Measures].[移动用户数] / [Measures].[User Count]
+),
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[移动用户占比] < 0.5,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+MEMBER [Measures].[移动号收集用户数] AS
+[Device.Phone].[有]
+
+// 用户数大于50，且移动用户占比大于50%，且移动号收集率小于20%
+MEMBER [Measures].[移动号收集率] AS
+Iif(
+	[Measures].[移动用户数] > 0 AND IsEmpty([Measures].[移动号收集用户数]),
+	0,
+	[Measures].[移动号收集用户数] / [Measures].[移动用户数]
+),
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[移动用户占比] > 0.5 AND [Measures].[移动号收集率] < 0.2,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+SELECT
+NON EMPTY {
+    [Measures].[User Count],
+    [Measures].[VPN用户占比],
+    [Measures].[移动用户占比],
+    [Measures].[移动用户数],
+    [Measures].[移动号收集率]
+} ON COLUMNS,
+NON EMPTY {
+    Order(
+		[Channel].[Code].Members,
+		[Measures].[VPN用户占比],
+		DESC
+	)
+} ON ROWS
+FROM [Device]
+WHERE {
+    CrossJoin(
+        [Device.Platform].[android],
+        {CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)}
+    )
+}

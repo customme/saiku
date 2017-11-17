@@ -1,0 +1,61 @@
+-- 渠道分组
+SELECT
+	customer_id,
+	MAX(user_count)
+FROM
+	(
+		SELECT
+			customer_id,
+			active_date,
+			COUNT(DISTINCT uuid) user_count
+		FROM fact_active
+		WHERE date_diff > 0
+		AND active_date >= CURDATE() - INTERVAL 31 DAY
+		GROUP BY 1, 2
+	) t
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+-- 待分析渠道
+WITH SET [Channels] AS
+{
+    [Channel].[Code].[QTJZ0033002],
+    [Channel].[Code].[SXMG0110012],
+    [Channel].[Code].[SXTX0001001],
+    [Channel].[Code].[SJDK0087004],
+    [Channel].[Code].[SJFY0089002]
+}
+
+-- 活跃时间段
+SET [ActiveDate Period] AS
+CurrentDateMember([ActiveDate], '"[ActiveDate].[Day]"\.[yyyy-mm-dd]').Lead(-31) : CurrentDateMember([ActiveDate], '"[ActiveDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)
+
+-- 活跃用户（去掉当日新增）
+MEMBER [Measures].[Real Active User] AS
+[Measures].[Active User Count] - [Measures].[New User Count]
+
+-- 指定时间范围内最大活跃用户量
+MEMBER [Measures].[Max Active User] AS
+Max([ActiveDate Period], [Measures].[Real Active User])
+
+-- 按最大活跃用户量分组渠道
+SET [Channel Group] AS
+Filter(
+    [Channel].[Code].Members,
+    [Measures].[Max Active User] < 5000 AND [Measures].[Max Active User] >= 1000
+--	[Measures].[Max Active User] < 1000 AND [Measures].[Max Active User] >= 100
+--	[Measures].[Max Active User] < 100 AND [Measures].[Max Active User] >= 50
+)
+
+SELECT
+NON EMPTY {
+    CrossJoin(
+        [Measures].[Real Active User],
+        [Channel Group]
+    )
+} ON COLUMNS,
+NON EMPTY {
+    [ActiveDate Period]
+} ON ROWS
+FROM [Active]

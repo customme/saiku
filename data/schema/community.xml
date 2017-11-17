@@ -1,0 +1,194 @@
+<?xml version="1.0"?>
+<Schema name="%{community.stat}" >
+
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" caption="%{dim.date}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<View alias="v_date">
+				<SQL><![CDATA[SELECT * FROM dim_date WHERE id <= CURDATE() and id>=20170101 order by id desc ]]></SQL>
+			</View>
+			<!--<Level name="Year" column="the_year" uniqueMembers="true" caption="%{dim.date.year}" />
+			<Level name="Quarter" column="the_quarter" uniqueMembers="true" caption="%{dim.date.quarter}" />
+			<Level name="Month" column="the_month" uniqueMembers="true" caption="%{dim.date.month}" />-->
+			<Level name="Day" column="the_day" uniqueMembers="true" caption="%{dim.date.day}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 渠道维度 -->
+	<Dimension name="Channel" caption="%{dim.channel}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_channel" />
+			<Level name="Name" column="channel_name" uniqueMembers="true" caption="%{dim.channel.name}" />
+			<Level name="Code" column="id" uniqueMembers="true" caption="%{dim.channel.code}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- App版本维度 -->
+	<Dimension name="Version" caption="%{dim.version}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_version" />
+			<Level name="No" column="version_no" uniqueMembers="true" caption="%{dim.version.no}" />
+			<Level name="Name" column="id" uniqueMembers="true" caption="%{dim.version.name}" />
+		</Hierarchy>
+	</Dimension>
+
+	
+	
+	<!--A1 社区基本信息Cube -->
+	<Cube name="bbs_basic" caption="%{community.bbs.basic}">
+		<!--<Table name="fact_bbs_basic" />-->
+		<View alias="v_fact_bbs_basic">
+			<SQL><![CDATA[SELECT * FROM fact_bbs_basic WHERE ring_id>700000000000000000 and click_times>0]]></SQL>
+		</View>
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 圈子名称 -->
+		<Dimension name="ringname" foreignKey="ring_id" caption="%{community.ring.name}">
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<!--<Table name="dim_group" />-->
+				<View alias="v_group">
+					<SQL><![CDATA[SELECT * FROM dim_group WHERE id>700000000000000000]]></SQL>
+				</View>
+				<Level name="name" column="ring_name" uniqueMembers="true" caption="%{community.ring.name}" />
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{community.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{community.times}"/>
+		<!--<Measure name="Focus User" column="focus_users" aggregator="sum" caption="%{community.focus}"/>
+		<Measure name="During" column="during" aggregator="sum" caption="%{community.during}"/>
+		<Measure name="Total Click Users" column="total_click_users" aggregator="sum" caption="%{community.total.click.users}"/>
+		<Measure name="Total Click Times" column="total_click_times" aggregator="sum" caption="%{community.total.click.times}"/>
+		<Measure name="Total Focus Users" column="total_focus_users" aggregator="sum" caption="%{community.total.focus}"/>
+		<Measure name="Total During" column="total_during" aggregator="sum" caption="%{community.total.during}"/>-->
+	</Cube>
+	
+	
+	
+	<!--A4 热门讨论信息Cube -->
+	<Cube name="hot_bbs_basic" caption="%{community.hot.bbs.basic}">
+		<!--<Table name="fact_hot_bbs_basic" />-->
+		<View alias="v_fact_hot_bbs_basic">
+			<SQL><![CDATA[SELECT * FROM fact_hot_bbs_basic WHERE click_times>0]]></SQL>
+		</View>
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 热门ID -->
+		<Dimension name="hotname" foreignKey="hot_id" caption="%{community.hot.name}" >
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<Table name="dim_hot" />
+				<Level name="name" column="hot_name" uniqueMembers="true" caption="%{community.hot.name}" />
+			</Hierarchy>
+		</Dimension>
+			
+		
+		<!-- 统计数据 -->
+		<Measure name="click_users" column="click_users" aggregator="sum" caption="%{hot.click.users}"/>
+		<Measure name="click_times" column="click_times" aggregator="sum" caption="%{hot.click.times}"/>
+		<!--<Measure name="send_num" column="send_num" aggregator="sum" caption="%{hot.send.num}"/>
+		<Measure name="reply_num" column="reply_num" aggregator="sum" caption="%{hot.reply.num}"/>
+		<Measure name="send_users" column="send_users" aggregator="sum" caption="%{hot.send.users}"/>
+		<Measure name="reply_users" column="reply_users" aggregator="sum" caption="%{hot.reply.users}"/>
+		<Measure name="total_click_users" column="total_click_users" aggregator="sum" caption="%{hot.total.click.users}"/>
+		<Measure name="total_click_times" column="total_click_times" aggregator="sum" caption="%{hot.total.click.times}"/>
+		<Measure name="total_send_num" column="total_send_num" aggregator="sum" caption="%{hot.total.send.num}"/>
+		<Measure name="total_reply_num" column="total_reply_num" aggregator="sum" caption="%{hot.total.reply.num}"/>
+		<Measure name="total_send_users" column="total_send_users" aggregator="sum" caption="%{hot.total.send.users}"/>
+		<Measure name="total_reply_users" column="total_reply_users" aggregator="sum" caption="%{hot.total.reply.users}"/>		-->
+		
+	</Cube>
+	
+	
+	
+	<!--A6 圈子最热帖子Cube -->
+	<Cube name="fact_top_post_detail" caption="%{community.bbs.top.post}">
+		<Table name="fact_top_post_detail" />
+		<!--<View alias="fact_top_post_detail">
+			<SQL><![CDATA[SET NAMES 'utf8mb4';SELECT * FROM fact_top_post_detail WHERE click_times>0]]></SQL>
+		</View>-->
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 圈子名称 				
+		<Dimension name="ringname" caption="%{community.ring.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="ring_name" caption="%{community.ring.name}"/>
+			</Hierarchy>
+		</Dimension>-->
+		
+		<!--<Dimension name="postname" caption="%{community.post.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="post_name" caption="%{community.post.name}"/>
+			</Hierarchy>
+		</Dimension>-->
+		
+		<Dimension name="Post">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Id" column="id">
+					<Property name="RingName" column="ring_name" />
+					<Property name="PostName" column="post_name" />
+				</Level>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 帖子名称  
+		<Dimension name="post_id" caption="%{community.post.id}" >
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="post_id" column="post_id" uniqueMembers="true" caption="%{community.post.id}">
+						<NameExpression>
+                            <SQL dialect="mysql">CONCAT(post_id, '')</SQL>
+                        </NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>-->
+		
+		
+
+		
+		<!-- 统计数据 -->
+		<Measure name="click_users" column="click_users" aggregator="sum" caption="%{hot.click.users}"/>
+		<Measure name="click_times" column="click_times" aggregator="sum" caption="%{hot.click.times}"/>
+
+		<CalculatedMember name="RingName" dimension="Measures" caption="%{community.ring.name}">
+			<Formula>[Post].[Id].CurrentMember.Properties("RingName")</Formula>
+		</CalculatedMember>
+		<CalculatedMember name="PostName" dimension="Measures" caption="%{community.post.name}">
+			<Formula>[Post].[Id].CurrentMember.Properties("PostName")</Formula>
+		</CalculatedMember>
+	</Cube>
+	
+	<!--用户概况Cube -->
+	<Cube name="fact_day_user" caption="%{user.info}">
+		<Table name="fact_day_user" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 统计数据 -->
+		<Measure name="today download" column="day_users" aggregator="sum" caption="%{user.today.download}"/>
+		<Measure name="yesterday_users" column="yesterday_users" aggregator="sum" caption="%{user.yesterday.download}"/>
+		<Measure name="yesterday_active" column="yesterday_active" aggregator="sum" caption="%{user.yesterday.active}"/>
+		<Measure name="yesterday_online_active" column="yesterday_online_active" aggregator="sum" caption="%{user.yesterday.online.active}"/>
+	</Cube>
+
+
+	<!-- 角色权限 -->
+	<!-- 广告运营 -->
+	<Role name="ROLE_ADOP">
+		<SchemaGrant access="none" />
+	</Role>
+
+</Schema>
+
+
+
+
+
+
+
+
+

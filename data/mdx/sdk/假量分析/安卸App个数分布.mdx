@@ -1,0 +1,43 @@
+// 用户数大于50，且未知占比大于90%
+WITH MEMBER [Measures].[未知占比] AS
+[Install].[未知] / [Install].DefaultMember,
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[未知占比] > 0.9,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+MEMBER [Measures].[1个占比] AS
+[Install].[1个] / [Install].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[2-10个占比] AS
+[Install].[2-10个] / [Install].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[10个以上占比] AS
+[Install].[10个以上] / [Install].DefaultMember,
+FORMAT_STRING="0.00%"
+
+SELECT
+NON EMPTY {
+    [Measures].[User Count],
+    [Measures].[未知占比],
+    [Measures].[1个占比],
+    [Measures].[2-10个占比],
+    [Measures].[10个以上占比]
+} ON COLUMNS,
+NON EMPTY {
+    Order(
+    	[Channel].[Code].Members,
+		[Measures].[未知占比],
+		DESC
+	)
+} ON ROWS
+FROM [Device]
+WHERE {
+    CrossJoin(
+        [Device.Platform].[android],
+        {CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)}
+    )
+}

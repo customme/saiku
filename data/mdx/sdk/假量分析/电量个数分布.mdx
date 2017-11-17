@@ -1,0 +1,48 @@
+WITH MEMBER [Measures].[未知占比] AS
+[Battery].[未知] / [Battery].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[1个占比] AS
+[Battery].[1个] / [Battery].DefaultMember,
+FORMAT_STRING="0.00%"
+
+// 用户数大于50，且未知+1个占比大于90%
+MEMBER [Measures].[未知+1个占比] AS
+([Battery].[未知] + [Battery].[1个]) / [Battery].DefaultMember,
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[未知+1个占比] > 0.9,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+MEMBER [Measures].[2-10个占比] AS
+[Battery].[2-10个] / [Battery].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[10个以上占比] AS
+[Battery].[10个以上] / [Battery].DefaultMember,
+FORMAT_STRING="0.00%"
+
+SELECT
+NON EMPTY {
+    [Measures].[User Count],
+    [Measures].[未知占比],
+    [Measures].[1个占比],
+    [Measures].[未知+1个占比],
+    [Measures].[2-10个占比],
+    [Measures].[10个以上占比]
+} ON COLUMNS,
+NON EMPTY {
+    Order(
+		[Channel].[Code].Members,
+		[Measures].[未知占比],
+		DESC
+	)
+} ON ROWS
+FROM [Device]
+WHERE {
+    CrossJoin(
+        [Device.Platform].[android],
+        {CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)}
+    )
+}

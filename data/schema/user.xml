@@ -1,0 +1,771 @@
+<?xml version="1.0"?>
+<Schema name="%{user.stat}" >
+
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" caption="%{dim.date}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<View alias="v_date">
+				<SQL><![CDATA[SELECT * FROM dim_date WHERE id <= CURDATE() and id>=20170101 order by id desc ]]></SQL>
+			</View>
+			<!--<Level name="Year" column="the_year" uniqueMembers="true" caption="%{dim.date.year}" />
+			<Level name="Quarter" column="the_quarter" uniqueMembers="true" caption="%{dim.date.quarter}" />
+			<Level name="Month" column="the_month" uniqueMembers="true" caption="%{dim.date.month}" />-->
+			<Level name="Day" column="the_day" uniqueMembers="true" caption="%{dim.date.day}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 渠道维度 -->
+	<Dimension name="Channel" caption="%{dim.channel}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_channel" />
+			<Level name="Name" column="channel_name" uniqueMembers="true" caption="%{dim.channel.name}" />
+			<Level name="Code" column="id" uniqueMembers="true" caption="%{dim.channel.code}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- App版本维度 -->
+	<Dimension name="Version" caption="%{dim.version}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_version" />
+			<Level name="No" column="version_no" uniqueMembers="true" caption="%{dim.version.no}" />
+			<Level name="Name" column="id" uniqueMembers="true" caption="%{dim.version.name}" />
+		</Hierarchy>
+	</Dimension>
+
+	
+	
+	<!--用户活跃Cube -->
+	<Cube name="fact_user_active" caption="%{user.active}">
+		<Table name="fact_user_active" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 渠道维度 -->	
+		<Dimension name="channel" caption="%{dim.channel}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="custom_id" caption="%{dim.channel}"/>
+			</Hierarchy>
+		</Dimension>
+		<!-- 版本维度 -->
+		<Dimension name="version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="version" caption="%{dim.version}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="User Count" column="active_users" aggregator="sum" caption="%{user.active}"/>
+		<Measure name="Online User Count" aggregator="sum" caption="%{user.online.active}">
+			<MeasureExpression>
+				<SQL>IF(version>'3' and custom_id IN('SX910032001','SX360031001','SXWD0030001','SXBD0029001','SXAZ0028001','SXAZ0027001','SXJF0026001','SXLX0024001','SX3G0022001','SXAR0021001','SXVI0020001','SXLQ0019001','SXYH0016001','SXMY0014001','SXHW0013001','SXXM0012001','SXMZ0011001','SXOP0010001','SXZL0009001','SXSJ0007001','SXND0005001','SXTX0001001','SXSG0110009','SXWN0001001','SXYY0004001'), active_users, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+	</Cube>
+	
+	<!--用户新增Cube -->
+	<Cube name="fact_user_new" caption="%{user.new}">
+		<Table name="fact_user_new" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 渠道维度 -->	
+		<Dimension name="channel" caption="%{dim.channel}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="custom_id" caption="%{dim.channel}"/>
+			</Hierarchy>
+		</Dimension>
+		<!-- 版本维度 -->
+		<Dimension name="version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="version" caption="%{dim.version}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="User Count" column="new_users" aggregator="sum" caption="%{user.new}"/>
+		<Measure name="Online User New" aggregator="sum" caption="%{user.online.new}">
+			<MeasureExpression>
+				<SQL>IF(version>'3' and custom_id IN('SX910032001','SX360031001','SXWD0030001','SXBD0029001','SXAZ0028001','SXAZ0027001','SXJF0026001','SXLX0024001','SX3G0022001','SXAR0021001','SXVI0020001','SXLQ0019001','SXYH0016001','SXMY0014001','SXHW0013001','SXXM0012001','SXMZ0011001','SXOP0010001','SXZL0009001','SXSJ0007001','SXND0005001','SXTX0001001','SXSG0110009','SXWN0001001','SXYY0004001'), new_users, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+	</Cube>
+	
+	<!--用户次日留存Cube -->
+	<Cube name="fact_user_retention" caption="%{user.retention}">
+		<Table name="fact_user_retention" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 渠道维度 -->	
+		<Dimension name="channel" caption="%{dim.channel}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="custom_id" caption="%{dim.channel}"/>
+			</Hierarchy>
+		</Dimension>
+		<!-- 版本维度 -->
+		<Dimension name="version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="version" caption="%{dim.version}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+
+		<Measure name="New User Count" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , new_users, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="Active User Count" aggregator="sum" visible="false" >
+			<MeasureExpression>
+				<SQL>IF(version>'3' , active_users, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="Online New User Count" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' and custom_id IN('SX910032001','SX360031001','SXWD0030001','SXBD0029001','SXAZ0028001','SXAZ0027001','SXJF0026001','SXLX0024001','SX3G0022001','SXAR0021001','SXVI0020001','SXLQ0019001','SXYH0016001','SXMY0014001','SXHW0013001','SXXM0012001','SXMZ0011001','SXOP0010001','SXZL0009001','SXSJ0007001','SXND0005001','SXTX0001001','SXSG0110009','SXWN0001001','SXYY0004001'), new_users, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="Online Active User Count" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' and custom_id IN('SX910032001','SX360031001','SXWD0030001','SXBD0029001','SXAZ0028001','SXAZ0027001','SXJF0026001','SXLX0024001','SX3G0022001','SXAR0021001','SXVI0020001','SXLQ0019001','SXYH0016001','SXMY0014001','SXHW0013001','SXXM0012001','SXMZ0011001','SXOP0010001','SXZL0009001','SXSJ0007001','SXND0005001','SXTX0001001','SXSG0110009','SXWN0001001','SXYY0004001'), active_users, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+		<CalculatedMember name="User Percent" dimension="Measures" formatString="Percent" caption="%{user.retention.ratio}">
+			<Formula>[Measures].[New User Count] / [Measures].[Active User Count]</Formula>
+		</CalculatedMember>
+		<CalculatedMember name="Online User Percent" dimension="Measures" formatString="Percent" caption="%{user.online.retention.ration}">
+			<Formula>[Measures].[Online New User Count] / [Measures].[Online Active User Count]</Formula>
+		</CalculatedMember>
+
+	</Cube>
+	
+	<!--用户使用次数时长Cube -->
+	<Cube name="fact_user_session" caption="%{user.session}">
+		<Table name="fact_user_session" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 渠道维度 -->	
+		<Dimension name="channel" caption="%{dim.channel}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="custom_id" caption="%{dim.channel}"/>
+			</Hierarchy>
+		</Dimension>
+		<!-- 版本维度 -->
+		<Dimension name="version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="version" caption="%{dim.version}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="session_num" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , session_num, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="num" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , num, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="duration" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , duration, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+		<CalculatedMember name="user avg duartion" dimension="Measures" formatString="00.00" caption="%{user.avg.duration}">
+			<Formula>[Measures].[duration] / [Measures].[num] / 60</Formula>
+		</CalculatedMember>
+		<CalculatedMember name="user avg times" dimension="Measures" formatString="0.00" caption="%{user.avg.times}">
+			<Formula>[Measures].[session_num] / [Measures].[num]</Formula>
+		</CalculatedMember>
+	</Cube>
+	
+	<!--首页推出率Cube -->
+	<Cube name="fact_user_lost" caption="%{user.exit.ratio}">
+		<Table name="fact_user_lost" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 渠道维度 -->	
+		<Dimension name="channel" caption="%{dim.channel}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="custom_id" caption="%{dim.channel}"/>
+			</Hierarchy>
+		</Dimension>
+		<!-- 版本维度 -->
+		<Dimension name="version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="version" caption="%{dim.version}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="lost_users" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , lost_users, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="active_users" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , active_users, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+		
+		<CalculatedMember name="user exit ratio" dimension="Measures" formatString="Percent" caption="%{user.exit.ratio}">
+			<Formula>[Measures].[lost_users] / [Measures].[active_users] </Formula>
+		</CalculatedMember>
+
+	</Cube>
+	
+	<!--打开次数分布Cube -->
+	<Cube name="fact_user_times_v2" caption="%{user.open.ratio}">
+		<Table name="fact_user_times_v2" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 渠道维度 -->	
+		<Dimension name="channel" caption="%{dim.channel}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="custom_id" caption="%{dim.channel}"/>
+			</Hierarchy>
+		</Dimension>
+		<!-- 版本维度 -->
+		<Dimension name="version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="version" caption="%{dim.version}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="total" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , level1+level2+level3+level4+level5+level6, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+		<Measure name="level1" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , level1, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level2" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , level2, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level3" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , level3, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level4" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , level4, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level5" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , level5, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level6" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' , level6, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+		<CalculatedMember name="level1 ratio" dimension="Measures" formatString="Percent" caption="%{user.open.level1}">
+			<Formula>[Measures].[level1] / [Measures].[total] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level2 ratio" dimension="Measures" formatString="Percent" caption="%{user.open.level2}">
+			<Formula>[Measures].[level2] / [Measures].[total] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level3 ratio" dimension="Measures" formatString="Percent" caption="%{user.open.level3}">
+			<Formula>[Measures].[level3] / [Measures].[total] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level4 ratio" dimension="Measures" formatString="Percent" caption="%{user.open.level4}">
+			<Formula>[Measures].[level4] / [Measures].[total] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level5 ratio" dimension="Measures" formatString="Percent" caption="%{user.open.level5}">
+			<Formula>[Measures].[level5] / [Measures].[total] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level6 ratio" dimension="Measures" formatString="Percent" caption="%{user.open.level6}">
+			<Formula>[Measures].[level6] / [Measures].[total] </Formula>
+		</CalculatedMember>
+
+	</Cube>
+	
+	<!--用户时长分布Cube -->
+	<Cube name="fact_user_time_v2" caption="%{user.time.ratio}">
+		<Table name="fact_user_time_v2" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 渠道维度 -->	
+		<Dimension name="channel" caption="%{dim.channel}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="custom_id" caption="%{dim.channel}"/>
+			</Hierarchy>
+		</Dimension>
+		<!-- 版本维度 -->
+		<Dimension name="version" caption="%{dim.version}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="version" caption="%{dim.version}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="total1" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' and type=1 , level1+level2+level3+level4+level5+level6+level7+level8, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="total2" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' and type=2 , level1+level2+level3+level4+level5+level6+level7+level8, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+		<Measure name="level11" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' and type=1 , level1, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level12" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=1 , level2, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level13" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=1 , level3, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level14" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=1 , level4, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level15" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=1 , level5, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level16" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=1 , level6, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level17" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=1 , level7, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level18" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=1 , level8, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+		<Measure name="level21" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3' and type=2 , level1, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level22" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=2 , level2, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level23" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=2 , level3, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level24" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=2 , level4, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level25" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=2 , level5, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level26" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=2 , level6, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level27" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=2 , level7, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		<Measure name="level28" aggregator="sum" visible="false">
+			<MeasureExpression>
+				<SQL>IF(version>'3'  and type=2 , level8, 0)</SQL>
+			</MeasureExpression>
+		</Measure>
+		
+		<CalculatedMember name="level1 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.level1}">
+			<Formula>[Measures].[level11] / [Measures].[total1] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level2 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.level2}">
+			<Formula>[Measures].[level12] / [Measures].[total1] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level3 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.level3}">
+			<Formula>[Measures].[level13] / [Measures].[total1] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level4 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.level4}">
+			<Formula>[Measures].[level14] / [Measures].[total1] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level5 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.level5}">
+			<Formula>[Measures].[level15] / [Measures].[total1] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level6 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.level6}">
+			<Formula>[Measures].[level16] / [Measures].[total1] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level7 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.level7}">
+			<Formula>[Measures].[level17] / [Measures].[total1] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level8 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.level8}">
+			<Formula>[Measures].[level18] / [Measures].[total1] </Formula>
+		</CalculatedMember>
+		
+		<CalculatedMember name="leve1 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.leve1}">
+			<Formula>[Measures].[level21] / [Measures].[total2] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="leve2 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.leve2}">
+			<Formula>[Measures].[level22] / [Measures].[total2] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="leve3 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.leve3}">
+			<Formula>[Measures].[level23] / [Measures].[total2] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="leve4 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.leve4}">
+			<Formula>[Measures].[level24] / [Measures].[total2] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="leve5 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.leve5}">
+			<Formula>[Measures].[level25] / [Measures].[total2] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="leve6 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.leve6}">
+			<Formula>[Measures].[level26] / [Measures].[total2] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="leve7 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.leve7}">
+			<Formula>[Measures].[level27] / [Measures].[total2] </Formula>
+		</CalculatedMember>
+		<CalculatedMember name="leve8 ratio" dimension="Measures" formatString="Percent" caption="%{user.time.leve8}">
+			<Formula>[Measures].[level28] / [Measures].[total2] </Formula>
+		</CalculatedMember>
+
+	</Cube>
+	
+	
+	<!--分时段活跃Cube -->
+	<Cube name="fact_user_interval_v2" caption="%{user.interval}">
+		<Table name="fact_user_interval_v2" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 时段维度 -->	
+		<Dimension name="hour" caption="%{dim.hour}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="hour" caption="%{dim.hour}"/>
+			</Hierarchy>
+		</Dimension>
+
+		
+		<!-- 统计数据 -->
+				
+		<Measure name="User Count" column="user_num" aggregator="sum" />
+		<CalculatedMember name="total count" dimension="Measures">
+			<Formula>[hour].DefaultMember</Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level1 ratio" dimension="Measures" formatString="Percent" caption="%{user.interval}">
+			<Formula>[hour].CurrentMember / [hour].DefaultMember</Formula>
+		</CalculatedMember>
+	</Cube>
+	
+	<!--主频道用户分布Cube -->
+	<Cube name="fact_main_channel_v2" caption="%{user.main}">
+		<Table name="fact_main_channel_v2" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 时段维度 -->	
+		<Dimension name="name" caption="%{dim.channelname}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="name" caption="%{dim.channelname}"/>
+			</Hierarchy>
+		</Dimension>
+
+		
+		<!-- 统计数据 -->
+				
+		<Measure name="User Count" column="user_num" aggregator="sum" />
+		<CalculatedMember name="total count" dimension="Measures">
+			<Formula>[name].DefaultMember</Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level1 ratio" dimension="Measures" formatString="Percent" caption="%{user.main}">
+			<Formula>[name].CurrentMember / [name].DefaultMember</Formula>
+		</CalculatedMember>
+	</Cube>
+	
+	<!--首页频道用户分布Cube -->
+	<Cube name="fact_homepage_channel_v2" caption="%{user.homepage}">
+		<Table name="fact_homepage_channel_v2" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 时段维度 -->	
+		<Dimension name="name" caption="%{dim.channelname}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="name" caption="%{dim.channelname}"/>
+			</Hierarchy>
+		</Dimension>
+
+		
+		<!-- 统计数据 -->
+				
+		<Measure name="User Count" column="user_num" aggregator="sum" />
+		<CalculatedMember name="total count" dimension="Measures">
+			<Formula>[name].DefaultMember</Formula>
+		</CalculatedMember>
+		<CalculatedMember name="level1 ratio" dimension="Measures" formatString="Percent" caption="%{user.homepage}">
+			<Formula>[name].CurrentMember / [name].DefaultMember</Formula>
+		</CalculatedMember>
+	</Cube>
+	
+	<!--社区首页推出率Cube -->
+	<Cube name="fact_community_lost" caption="%{user.community.exit.ratio}">
+		<Table name="fact_community_lost" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 统计数据 -->
+		<Measure name="User Count" column="ratio" aggregator="avg" formatString="Percent" caption="%{user.community.exit.ratio}"/>
+
+	</Cube>
+	
+	<!--社区用户分布Cube -->
+	<Cube name="fact_community_user" caption="%{user.community.user.ratio}">
+		<Table name="fact_community_user" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 名称维度 -->	
+		<Dimension name="name" caption="%{dim.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="name" column="name" caption="%{dim.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="User Count" column="ratio" aggregator="avg" formatString="Percent" caption="%{user.community.user.ratio}"/>
+		
+	</Cube>
+	
+	<!--评论数Cube -->
+	<Cube name="fact_comment_info" caption="%{user.comment.info}">
+		<Table name="fact_comment_info" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 名称维度 -->	
+		<Dimension name="comment_name" caption="%{dim.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="comment_name" column="comment_name" caption="%{dim.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		<Measure name="ctimes" column="times" aggregator="sum"  caption="%{user.comment.times}"/>
+		<Measure name="cusers" column="users" aggregator="sum"  caption="%{user.comment.time}"/>
+		<Measure name="rtimes" column="read_times" aggregator="sum"  caption="%{user.read.times}"/>
+		<Measure name="rusers" column="read_users" aggregator="sum"  caption="%{user.read.time}"/>
+		
+	</Cube>
+	
+	<!--频道活跃用户Cube -->
+	<Cube name="fact_channel_info" caption="%{user.channel.user}">
+		<Table name="fact_channel_info" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 名称维度 -->	
+		<Dimension name="channel" caption="%{dim.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="channel" column="channel" caption="%{dim.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		
+		<Measure name="cusers" column="active_users" aggregator="avg"  caption="%{user.avg.user}"/>
+		
+	</Cube>
+	
+	<!--圈子信息Cube -->
+	<Cube name="fact_bbs_info" caption="%{user.bbs.info}">
+		<Table name="fact_bbs_info" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 名称维度 -->	
+		<Dimension name="ring_name" caption="%{dim.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="ring_name" column="ring_name" caption="%{dim.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		
+		<Measure name="times" column="click_times" aggregator="sum"  caption="%{community.times}"/>
+		<Measure name="users" column="click_users" aggregator="sum"  caption="%{community.user}"/>
+		<Measure name="focus" column="focus_users" aggregator="sum"  caption="%{community.focus}"/>
+		<Measure name="total_focus" column="total_focus_users" aggregator="sum"  caption="%{community.total.focus}"/>
+		<Measure name="sendn" column="send_num" aggregator="sum"  caption="%{community.send.num}"/>
+		<Measure name="replyn" column="reply_num" aggregator="sum"  caption="%{community.reply.num}"/>
+		<Measure name="sendu" column="send_users" aggregator="sum"  caption="%{community.send.users}"/>
+		<Measure name="replyu" column="reply_users" aggregator="sum"  caption="%{community.reply.users}"/>
+		<Measure name="rsendn" column="r_send_num" aggregator="sum"  caption="%{community.r_send.num}"/>
+		<Measure name="rreplyn" column="r_reply_num" aggregator="sum"  caption="%{community.r_reply.num}"/>
+		<Measure name="rsendu" column="r_send_users" aggregator="sum"  caption="%{community.r_send.users}"/>
+		<Measure name="rreplyu" column="r_reply_users" aggregator="sum"  caption="%{community.r_reply.users}"/>
+		
+	</Cube>
+	
+	<!--热门讨论信息Cube -->
+	<Cube name="fact_hot_bbs_info" caption="%{user.hot.bbs.info}">
+		<Table name="fact_hot_bbs_info" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<!-- 名称维度 -->	
+		<Dimension name="ring_name" caption="%{dim.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="ring_name" column="ring_name" caption="%{dim.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 统计数据 -->
+		
+		<Measure name="times" column="click_times" aggregator="sum"  caption="%{community.times}"/>
+		<Measure name="users" column="click_users" aggregator="sum"  caption="%{community.user}"/>
+		<Measure name="sendn" column="send_num" aggregator="sum"  caption="%{community.send.num}"/>
+		<Measure name="replyn" column="reply_num" aggregator="sum"  caption="%{community.reply.num}"/>
+		<Measure name="sendu" column="send_users" aggregator="sum"  caption="%{community.send.users}"/>
+		<Measure name="replyu" column="reply_users" aggregator="sum"  caption="%{community.reply.users}"/>
+		<Measure name="rsendn" column="r_send_num" aggregator="sum"  caption="%{community.r_send.num}"/>
+		<Measure name="rreplyn" column="r_reply_num" aggregator="sum"  caption="%{community.r_reply.num}"/>
+		<Measure name="rsendu" column="r_send_users" aggregator="sum"  caption="%{community.r_send.users}"/>
+		<Measure name="rreplyu" column="r_reply_users" aggregator="sum"  caption="%{community.r_reply.users}"/>
+		<Measure name="ttimes" column="total_click_times" aggregator="sum"  caption="%{hot.total.click.times}"/>
+		<Measure name="tusers" column="total_click_users" aggregator="sum"  caption="%{hot.total.click.users}"/>
+		
+	</Cube>
+	
+	<!--粉圈帖子信息Cube -->
+	<Cube name="fact_star_bbs_info" caption="%{user.star.bbs.info}">
+		<Table name="fact_star_bbs_info" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		<Dimension name="Post">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Id" column="post_id" internalType="long">
+					<Property name="ring_name" column="ring_name" />
+					<Property name="post_name" column="post_name" />
+				</Level>
+			</Hierarchy>
+		</Dimension>
+		<!-- 统计数据 -->
+		<Measure name="times" column="click_times" aggregator="sum"  caption="%{community.times}"/>
+		<Measure name="users" column="click_users" aggregator="sum"  caption="%{community.user}"/>
+		<Measure name="replyn" column="reply_num" aggregator="sum"  caption="%{community.reply.num}"/>
+		<Measure name="replyu" column="reply_users" aggregator="sum"  caption="%{community.reply.users}"/>
+		<Measure name="liken" column="like_num" aggregator="sum"  caption="%{post.like.num}"/>
+		<Measure name="sharen" column="share_num" aggregator="sum"  caption="%{post.share.num}"/>
+		<Measure name="rreplyn" column="r_reply_num" aggregator="sum"  caption="%{community.r_reply.num}"/>
+		<Measure name="rreplyu" column="r_reply_users" aggregator="sum"  caption="%{community.r_reply.users}"/>
+		<Measure name="ttimes" column="total_click_times" aggregator="sum"  caption="%{hot.total.click.times}"/>
+		<Measure name="tusers" column="total_click_users" aggregator="sum"  caption="%{hot.total.click.users}"/>
+		
+		<CalculatedMember name="ring_name" dimension="Measures" caption="%{community.ring.name}">
+			<Formula>[Post].[Id].CurrentMember.Properties("ring_name")</Formula>
+		</CalculatedMember>
+		<CalculatedMember name="post_name" dimension="Measures" caption="%{community.post.name}">
+			<Formula>[Post].[Id].CurrentMember.Properties("post_name")</Formula>
+		</CalculatedMember>
+		
+	</Cube>
+	
+	<!--圈子帖子信息Cube -->
+	<Cube name="fact_group_bbs_info" caption="%{user.group.bbs.info}">
+		<Table name="fact_group_bbs_info" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<Dimension name="ring_name" caption="%{dim.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="ring_name" column="ring_name" caption="%{dim.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<Dimension name="Post">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Id" column="post_id" internalType="long">
+					<Property name="post_name" column="post_name" />
+				</Level>
+			</Hierarchy>
+		</Dimension>
+		<!-- 统计数据 -->
+		<Measure name="times" column="click_times" aggregator="sum"  caption="%{community.times}"/>
+		<Measure name="users" column="click_users" aggregator="sum"  caption="%{community.user}"/>
+		<Measure name="replyn" column="reply_num" aggregator="sum"  caption="%{community.reply.num}"/>
+		<Measure name="replyu" column="reply_users" aggregator="sum"  caption="%{community.reply.users}"/>
+		<Measure name="liken" column="like_num" aggregator="sum"  caption="%{post.like.num}"/>
+		<Measure name="sharen" column="share_num" aggregator="sum"  caption="%{post.share.num}"/>
+		<Measure name="rreplyn" column="r_reply_num" aggregator="sum"  caption="%{community.r_reply.num}"/>
+		<Measure name="rreplyu" column="r_reply_users" aggregator="sum"  caption="%{community.r_reply.users}"/>
+		<Measure name="ttimes" column="total_click_times" aggregator="sum"  caption="%{hot.total.click.times}"/>
+		<Measure name="tusers" column="total_click_users" aggregator="sum"  caption="%{hot.total.click.users}"/>
+		
+		<!--<CalculatedMember name="ring_name" dimension="Measures" caption="%{community.ring.name}">
+			<Formula>[Post].[Id].CurrentMember.Properties("ring_name")</Formula>
+		</CalculatedMember> -->
+		<CalculatedMember name="post_name" dimension="Measures" caption="%{community.post.name}">
+			<Formula>[Post].[Id].CurrentMember.Properties("post_name")</Formula>
+		</CalculatedMember>
+		
+	</Cube>
+	
+	
+
+
+	<!-- 角色权限 -->
+	<!-- 广告运营 -->
+	<Role name="ROLE_ADOP">
+		<SchemaGrant access="none" />
+	</Role>
+
+</Schema>
+
+
+
+
+
+
+
+
+

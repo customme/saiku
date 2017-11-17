@@ -1,0 +1,30 @@
+-- 活跃用户概况
+SELECT
+NON EMPTY {[Measures].[Visit User Count], [Measures].[New User Count], [Measures].[Active User Count], [Measures].[New User Percent], [Measures].[Active User Percent]} ON COLUMNS,
+NON EMPTY {Hierarchize({[Latest VisitDate 30]})} ON ROWS
+FROM [ActiveUser]
+
+-- 活跃用户版本分布
+SELECT
+NON EMPTY {[Measures].[Active User Count]} ON COLUMNS,
+NON EMPTY CrossJoin([Channel].[ChannelID].Members, CrossJoin([Latest VisitDate 30], [APPVersion].[Version].Members)) ON ROWS
+FROM [ActiveUser]
+WHERE {[OS].[Android]}
+
+-- 活跃用户组成
+SELECT
+NON EMPTY CrossJoin({[Measures].[Visit User Count]}, [DateDiff].[DayDiff].Members) ON COLUMNS,
+NON EMPTY {Hierarchize({[Latest VisitDate 30]})} ON ROWS
+FROM [ActiveUser]
+
+-- 激活几日内留存率
+SELECT
+NON EMPTY {[Measures].[New User Count], [Measures].[Keep User Percent 1], [Measures].[Keep User Percent In 7], [Measures].[Keep User Percent In 14], [Measures].[Keep User Percent In 30], [Measures].[Keep User Percent In 60]} ON COLUMNS,
+NON EMPTY {CurrentDateMember([VisitDate.Monthly],'[Date]\.[yyyy-mm-dd]').Lead(-61) : CurrentDateMember([VisitDate.Monthly],'[Date]\.[yyyy-mm-dd]')} ON ROWS
+FROM [ActiveUser]
+
+-- 激活第几日留存
+SELECT
+NON EMPTY CrossJoin({[Measures].[Visit User Count]}, [DateDiff].[DayDiff].Members) ON COLUMNS,
+NON EMPTY {Hierarchize({[Latest ActivateDate 30]})} ON ROWS
+FROM [ActiveUser]

@@ -1,0 +1,116 @@
+WITH MEMBER [Measures].[VPN用户占比] AS
+[Device.VPN].[是] / [Device.VPN].DefaultMember,
+FORMAT_STRING=(
+    CASE
+    WHEN [Measures].[User Count] > 50 AND [Measures].[VPN用户占比] > 0.1 THEN '|0.00%|style=red' 
+	WHEN [Measures].[User Count] > 50 AND [Measures].[VPN用户占比] < 0.01 THEN '|0.00%|style=green' 
+	ELSE '|0.00%|'
+	END
+)
+
+MEMBER [Measures].[移动号收集率] AS
+[Device.Phone].[有] / [Device.ISP].[中国移动],
+FORMAT_STRING=(
+	CASE
+    WHEN [Measures].[User Count] > 50 AND [Measures].[移动号收集率] < 0.1 THEN '|0.00%|style=red'
+	WHEN [Measures].[User Count] > 50 AND [Measures].[移动号收集率] > 0.5 THEN '|0.00%|style=green'
+    ELSE '|0.00%|'
+	END
+)
+
+MEMBER [Measures].[WIFI+未知占比] AS
+([Device.Network].[WIFI] + [Device.Network].[unknown]) / [Device.Network].DefaultMember,
+FORMAT_STRING=(
+    CASE
+	WHEN [Measures].[User Count] > 50 AND [Measures].[WIFI+未知占比] > 0.9 THEN '|0.00%|style=red'
+    WHEN [Measures].[User Count] > 50 AND [Measures].[WIFI+未知占比] < 0.6 THEN '|0.00%|style=green'
+    ELSE '|0.00%|'
+	END
+)
+
+MEMBER [Measures].[进程1分钟占比] AS
+[Runtime].[~1分] / [Runtime].DefaultMember,
+FORMAT_STRING=(
+	CASE
+    WHEN [Measures].[User Count] > 50 AND [Measures].[进程1分钟占比] > 0.9 THEN '|0.00%|style=red'
+    WHEN [Measures].[User Count] > 50 AND [Measures].[进程1分钟占比] < 0.6 THEN '|0.00%|style=green'
+    ELSE '|0.00%|'
+	END
+)
+
+MEMBER [Measures].[亮屏未知+1次占比] AS
+([Unlock].[未知] + [Unlock].[1次]) / [Unlock].DefaultMember,
+FORMAT_STRING=(
+    CASE
+	WHEN [Measures].[User Count] > 50 AND [Measures].[亮屏未知+1次占比] > 0.95 THEN '|0.00%|style=red'
+    WHEN [Measures].[User Count] > 50 AND [Measures].[亮屏未知+1次占比] < 0.85 THEN '|0.00%|style=green'
+    ELSE '|0.00%|'
+	END
+)
+
+MEMBER [Measures].[电量未知+1个占比] AS
+([Battery].[未知] + [Battery].[1个]) / [Battery].DefaultMember,
+FORMAT_STRING=(
+    CASE
+	WHEN [Measures].[User Count] > 50 AND [Measures].[电量未知+1个占比] > 0.95 THEN '|0.00%|style=red'
+    WHEN [Measures].[User Count] > 50 AND [Measures].[电量未知+1个占比] < 0.85 THEN '|0.00%|style=green'
+    ELSE '|0.00%|'
+	END
+)
+
+MEMBER [Measures].[基站未知+1个占比] AS
+([Station].[未知] + [Station].[1个]) / [Station].DefaultMember,
+FORMAT_STRING=(
+	CASE
+    WHEN [Measures].[User Count] > 50 AND [Measures].[基站未知+1个占比] > 0.95 THEN '|0.00%|style=red'
+    WHEN [Measures].[User Count] > 50 AND [Measures].[基站未知+1个占比] < 0.85 THEN '|0.00%|style=green'
+    ELSE '|0.00%|'
+	END
+)
+
+MEMBER [Measures].[时间异常用户占比] AS
+([Etime].[1次] + [Etime].[2次] + [Etime].[3次+]) / [Etime].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[应用账号未知占比] AS
+[Account].[未知] / [Account].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[安卸App未知占比] AS
+[Install].[未知] / [Install].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[使用App未知占比] AS
+[Appuse].[未知] / [Appuse].DefaultMember,
+FORMAT_STRING="0.00%"
+
+SELECT
+NON EMPTY {
+    [Measures].[User Count],
+    [Measures].[VPN用户占比],
+    [Measures].[移动号收集率],
+    [Measures].[WIFI+未知占比],
+	[Measures].[进程1分钟占比],
+	[Measures].[亮屏未知+1次占比],
+	[Measures].[电量未知+1个占比],
+	[Measures].[基站未知+1个占比],
+	[Measures].[时间异常用户占比],
+	[Measures].[应用账号未知占比],
+	[Measures].[安卸App未知占比],
+	[Measures].[使用App未知占比]
+} ON COLUMNS,
+NON EMPTY {
+    Order(
+        [Channel].[Code].Members,
+        [Measures].[User Count],
+	--	[Channel].[Code].CurrentMember.Name,
+        DESC
+    )
+} ON ROWS
+FROM [Device]
+WHERE {
+    CrossJoin(
+        [Device.Platform].[android],
+        {CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)}
+    )
+}

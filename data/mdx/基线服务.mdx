@@ -1,0 +1,41 @@
+-- yygz_ios_激活量
+SELECT
+NON EMPTY {[Measures].[New User Count]} ON COLUMNS,
+NON EMPTY CrossJoin([Channel].[ChannelID].Members, [Latest ActivateDate 30]) ON ROWS
+FROM [Device]
+WHERE {[OS].[iOS]}
+
+-- 低版本升级用户比率
+SELECT
+NON EMPTY CrossJoin({[Measures].[Activate User Count]}, [Upgrade].[IsUpgraded].Members) ON COLUMNS,
+NON EMPTY {Hierarchize({[Channel].[ChannelID].Members})} ON ROWS
+FROM [Device]
+WHERE {[InitAppVersion].FirstChild : [InitAppVersion].LastChild.PrevMember}
+
+-- 安装用户版本分布
+SELECT
+NON EMPTY {[Measures].[Install User Count]} ON COLUMNS,
+NON EMPTY CrossJoin([Latest InstallDate 30], [InitAppVersion].[Version].Members) ON ROWS
+FROM [Device]
+WHERE CrossJoin({[Repeat].[0]}, {[AndroidID].[0]})
+
+-- 安装量
+SELECT
+NON EMPTY {[Measures].[Install User Count]} ON COLUMNS,
+NON EMPTY CrossJoin([Channel].[ChannelID].Members, [Latest InstallDate 30]) ON ROWS
+FROM [Device]
+WHERE CrossJoin({[AndroidID].[0]}, CrossJoin({[Repeat].[0]}, {[IMSI].[0]}))
+
+-- 激活用户版本分布
+SELECT
+NON EMPTY {[Measures].[Activate User Count]} ON COLUMNS,
+NON EMPTY CrossJoin([Latest ActivateDate 30], [InitAppVersion].[Version].Members) ON ROWS
+FROM [Device]
+WHERE CrossJoin({[Repeat].[0]}, CrossJoin({[AndroidID].[0]}, {[Activate].[1]}))
+
+-- 激活量
+SELECT
+NON EMPTY {[Measures].[Activate User Count]} ON COLUMNS,
+NON EMPTY CrossJoin([Channel].[ChannelID].Members, [Latest ActivateDate 30]) ON ROWS
+FROM [Device]
+WHERE CrossJoin({[AndroidID].[0]}, CrossJoin({[Repeat].[0]}, CrossJoin({[Activate].[1]}, {[IMSI].[0]})))

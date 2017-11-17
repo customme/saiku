@@ -1,0 +1,44 @@
+WITH MEMBER [Measures].[次日留存率] AS
+[DateDiff].[Day].[1] / Aggregate(
+    CrossJoin(
+		[DateDiff].[Day].[0],
+		CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-2)
+	)
+),
+FORMAT_STRING='0.000%'
+
+MEMBER [Measures].[3日留存率] AS
+[DateDiff].[Day].[3] / Aggregate(
+	CrossJoin(
+		[DateDiff].[Day].[0],
+		CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-4)
+	)
+),
+FORMAT_STRING='0.000%'
+
+MEMBER [Measures].[6日留存率] AS
+[DateDiff].[Day].[6] / Aggregate(
+	CrossJoin(
+		[DateDiff].[Day].[0],
+		CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7)
+	)
+),
+FORMAT_STRING='0.000%'
+
+SELECT
+NON EMPTY {
+    [Measures].[New User Count],
+    [Measures].[次日留存率],
+    [Measures].[3日留存率],
+    [Measures].[6日留存率]
+} ON COLUMNS,
+NON EMPTY {
+    [Channel].[Code].Members
+} ON ROWS
+FROM [Active]
+WHERE {
+    CrossJoin(
+        [Device.Platform].[android],
+        CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)
+    )
+}

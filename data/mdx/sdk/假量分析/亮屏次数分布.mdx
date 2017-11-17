@@ -1,0 +1,48 @@
+WITH MEMBER [Measures].[未知占比] AS
+[Unlock].[未知] / [Unlock].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[1次占比] AS
+[Unlock].[1次] / [Unlock].DefaultMember,
+FORMAT_STRING="0.00%"
+
+// 用户数大于50，且未知+1次占比大于95%
+MEMBER [Measures].[未知+1次占比] AS
+([Unlock].[未知] + [Unlock].[1次]) / [Unlock].DefaultMember,
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[未知+1次占比] > 0.95,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+MEMBER [Measures].[2-10次占比] AS
+[Unlock].[2-10次] / [Unlock].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[10次以上占比] AS
+[Unlock].[10次以上] / [Unlock].DefaultMember,
+FORMAT_STRING="0.00%"
+
+SELECT
+NON EMPTY {
+    [Measures].[User Count],
+    [Measures].[未知占比],
+    [Measures].[1次占比],
+    [Measures].[未知+1次占比],
+    [Measures].[2-10次占比],
+    [Measures].[10次以上占比]
+} ON COLUMNS,
+NON EMPTY {
+    Order(
+		[Channel].[Code].Members,
+		[Measures].[未知+1次占比],
+		DESC
+	)
+} ON ROWS
+FROM [Device]
+WHERE {
+    CrossJoin(
+        [Device.Platform].[android],
+        {CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)}
+    )
+}

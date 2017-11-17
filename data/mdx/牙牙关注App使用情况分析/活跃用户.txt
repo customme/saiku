@@ -1,0 +1,50 @@
+-- IOS渠道
+WITH SET [Channels-IOS] AS {
+    [Channel].[Code].[SXGW1000000], [Channel].[Code].[SX911032001]
+}
+
+-- Android渠道
+SET [Channels-Android] AS {
+    Except([Channel].[Code].Members, [Channels-IOS])
+}
+
+-- Android线上渠道
+SET [Channels-Android-ONL] AS {
+    [Channel].[Code].[SX3G0022001], [Channel].[Code].[SX910032001], [Channel].[Code].[SX360031001], [Channel].[Code].[SXND0005001], [Channel].[Code].[SXOP0010001],
+    [Channel].[Code].[SXVI0020001], [Channel].[Code].[SXWN0001001], [Channel].[Code].[SXWN0001002], [Channel].[Code].[SXAZ0028001], [Channel].[Code].[SXAZ0027001],
+    [Channel].[Code].[SXAR0021001], [Channel].[Code].[SXBD0029001], [Channel].[Code].[SXHW0013001], [Channel].[Code].[SXJF0026001], [Channel].[Code].[SXJL0123001],
+    [Channel].[Code].[SXLQ0019001], [Channel].[Code].[SXLX0024001], [Channel].[Code].[SXMZ0011001], [Channel].[Code].[SXMY0014001], [Channel].[Code].[SXSJ0007001],
+    [Channel].[Code].[SXSG0110009], [Channel].[Code].[SXTX0001002], [Channel].[Code].[SXTX0001001], [Channel].[Code].[SXTY0110008], [Channel].[Code].[SXWD0030001],
+    [Channel].[Code].[SXXM0012001], [Channel].[Code].[SXYH0016001], [Channel].[Code].[SXZL0009001], [Channel].[Code].[SXYY0004001]
+}
+
+-- Android线下渠道
+SET [Channels-Android-OFFL] AS {
+    Except([Channel].[Code].Members, {[Channels-IOS], [Channels-Android-ONL]})
+}
+
+-- 日期范围
+SET [ActivePeriod] AS {
+    [ActiveDate].[Day].[2016-12-17] : [ActiveDate].[Day].[2017-01-17]
+}
+
+MEMBER [Measures].[IOS活跃用户] AS Aggregate([Channels-IOS], [Measures].[Active User Count])
+MEMBER [Measures].[Android活跃用户] AS Aggregate([Channels-Android], [Measures].[Active User Count])
+MEMBER [Measures].[Android线上活跃用户] AS Aggregate([Channels-Android-ONL], [Measures].[Active User Count])
+MEMBER [Measures].[Android线下活跃用户] AS Aggregate([Channels-Android-OFFL], [Measures].[Active User Count])
+
+SELECT
+NON EMPTY {
+    [Measures].[Active User Count],
+	[Measures].[IOS活跃用户],
+	[Measures].[Android活跃用户],
+	[Measures].[Android线上活跃用户],
+	[Measures].[Android线下活跃用户]
+} ON COLUMNS,
+NON EMPTY {
+	[ActivePeriod]
+} ON ROWS
+FROM [Active]
+WHERE {
+	[LogType].[用户主动]
+}

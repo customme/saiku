@@ -1,0 +1,469 @@
+<?xml version="1.0"?>
+<Schema name="%{event.stat}" >
+
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" caption="%{dim.date}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<!--<Table name="dim_date" />-->
+			<View alias="v_date">
+				<SQL><![CDATA[SELECT * FROM dim_date WHERE id <= CURDATE() and id>=20170101 order by id desc ]]></SQL>
+			</View>
+			<Level name="Year" column="the_year" uniqueMembers="true" caption="%{dim.date.year}" />
+			<Level name="Quarter" column="the_quarter" uniqueMembers="true" caption="%{dim.date.quarter}" />
+			<Level name="Month" column="the_month" uniqueMembers="true" caption="%{dim.date.month}" />
+			<Level name="Day" column="the_day" uniqueMembers="true" caption="%{dim.date.day}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 渠道维度 -->
+	<Dimension name="Channel" caption="%{dim.channel}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_channel" />
+			<Level name="Name" column="channel_name" uniqueMembers="true" caption="%{dim.channel.name}" />
+			<Level name="Code" column="id" uniqueMembers="true" caption="%{dim.channel.code}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- App版本维度 -->
+	<Dimension name="Version" caption="%{dim.version}">
+		<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+			<Table name="dim_version" />
+			<Level name="No" column="version_no" uniqueMembers="true" caption="%{dim.version.no}" />
+			<Level name="Name" column="id" uniqueMembers="true" caption="%{dim.version.name}" />
+		</Hierarchy>
+	</Dimension>
+
+	<!-- 主标签点击分析Cube -->
+	<Cube name="mainlabel" caption="%{event.mainlabel}">
+		<Table name="fact_event_mainlabel" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 事件名称 -->
+		<Dimension name="EventName" caption="%{event.name}" >
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="EventName" column="event_name" uniqueMembers="true" caption="%{event.name}">
+					<NameExpression>
+						<SQL dialect="mysql">
+CASE WHEN event_name = 'RecreateFragment' THEN '娱乐'
+WHEN event_name = 'MyStarFragment' THEN '明星'
+WHEN event_name = 'StarPlanetFragment' THEN '星球'
+WHEN event_name = 'InteractFragment' THEN '发现'
+WHEN event_name = 'MyFragment' THEN '我的'
+WHEN event_name = 'VideoFragment' THEN '视频'
+ELSE event_name END
+						</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{event.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{event.times}"/>
+	</Cube>
+	
+	<!-- 二级标签点击分析Cube -->
+	<Cube name="sublabel" caption="%{event.sublabel}">
+		<Table name="fact_event_sublabel" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 事件名称 -->
+		<Dimension name="EventName" caption="%{event.name}" >
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="EventName" column="event_name" uniqueMembers="true" caption="%{event.name}">
+					<NameExpression>
+						<SQL dialect="mysql">
+CASE WHEN event_name = 'mystar_detail' THEN '明星详情'
+WHEN event_name = 'public_detail' THEN '公益详情'
+WHEN event_name = 'recreate_sub' THEN '娱乐二级'
+WHEN event_name = 'video_sub' THEN '视频二级'
+ELSE event_name END
+						</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 栏目ID-->
+		<Dimension name="acc" foreignKey="acc" caption="%{event.acc}">
+			<Hierarchy primaryKey="id" hasAll="true" allLevelName="%{dim.all}">
+				<Table name="dim_info_cat" />
+				<Level name="acc" column="name" uniqueMembers="true" caption="%{event.category}"/>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{event.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{event.times}"/>
+	</Cube>
+	
+	<!-- 点击详情分析Cube -->
+	<Cube name="detail" caption="%{event.detail}">
+		<Table name="fact_event_detail" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 事件名称 -->
+		<Dimension name="EventName" caption="%{event.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="EventName" column="event_name" uniqueMembers="true" caption="%{event.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 事件类型 -->
+		<Dimension name="label" caption="%{event.label}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="label" column="label" uniqueMembers="true" caption="%{event.label}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 内容ID -->
+		<Dimension name="acc" foreignKey="acc" caption="%{event.acc}">
+			<Hierarchy primaryKey="id" primaryKeyTable="dim_info" hasAll="true" allLevelName="%{dim.all}">
+				<Join leftKey="category_id" rightKey="id">
+					<Table name="dim_info" alias="a" />
+					<Table name="dim_info_cat" alias="b" />
+				</Join>
+				<Level name="Name" table="b" column="name" uniqueMembers="true" caption="%{event.category}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{event.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{event.times}"/>
+	</Cube>
+	
+	<!-- 分享分析Cube -->
+	<Cube name="share" caption="%{event.share}">
+		<Table name="fact_event_share" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 事件名称 -->
+		<Dimension name="EventName" caption="%{event.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="EventName" column="event_name" uniqueMembers="true" caption="%{event.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 事件类型 -->
+		<Dimension name="label" caption="%{event.label}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="label" column="label" uniqueMembers="true" caption="%{event.label}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- category-->
+		<Dimension name="category" caption="%{event.category}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="category" column="category" uniqueMembers="true" caption="%{event.category}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 内容ID-->
+		<Dimension name="acc" caption="%{event.acc}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="acc" column="acc" uniqueMembers="true" caption="%{event.acc}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{event.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{event.times}"/>
+	</Cube>
+	
+	<!-- 购票公益模块分析Cube -->
+	<Cube name="welfare" caption="%{event.welfare}">
+		<Table name="fact_event_welfare" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 事件名称 -->
+		<Dimension name="EventName" caption="%{event.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="EventName" column="event_name" uniqueMembers="true" caption="%{event.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 事件类型 -->
+		<Dimension name="label" aption="%{event.label}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="label" column="label" uniqueMembers="true" caption="%{event.label}"/>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{event.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{event.times}"/>
+	</Cube>
+
+	<!-- 点击事件 -->
+	<Cube name="Event" caption="%{cube.event}">
+		<Table name="fact_event" />
+
+		<!-- 事件名称 -->
+		<Dimension name="Event" caption="%{dim.event}" >
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="event_id" uniqueMembers="true" caption="%{event.name}">
+					<NameExpression>
+						<SQL dialect="mysql">
+CASE WHEN event_id = 'Main' THEN '首页'
+WHEN event_id = 'MyStarFragment' THEN '明星'
+WHEN event_id = 'Community' THEN '社区'
+WHEN event_id = 'InteractFragment' THEN '发现'
+WHEN event_id = 'MyFragment' THEN '我的'
+ELSE event_id END
+						</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Channel" source="Channel" foreignKey="customer_id" />
+		<DimensionUsage name="Version" source="Version" foreignKey="version" caption="%{dim.app.version.current}" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" />
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="user_count" aggregator="sum" formatString="#,###" caption="%{event.user}"/>
+		<!-- 点击数 -->
+		<Measure name="Click Times" column="click_count" aggregator="sum" formatString="#,###" caption="%{event.times}"/>
+	</Cube>
+
+	<!-- 分时段事件 -->
+	<Cube name="HourEvent" caption="%{cube.hour_event}">
+		<Table name="fact_hour_event" />
+
+		<!-- 事件名称 -->
+		<Dimension name="Event" caption="%{dim.event}" >
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="event_id" uniqueMembers="true" caption="%{event.name}" />
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 时段 -->
+		<Dimension name="Hour" caption="%{dim.time}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="create_hour" uniqueMembers="true" caption="%{dim.time.hour}" />
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Channel" source="Channel" foreignKey="customer_id" />
+		<DimensionUsage name="Version" source="Version" foreignKey="version" caption="%{dim.app.version.current}" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" />
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="user_count" aggregator="sum" formatString="#,###" caption="%{event.user}"/>
+		<!-- 点击数 -->
+		<Measure name="Click Times" column="click_count" aggregator="sum" formatString="#,###" caption="%{event.times}"/>
+	</Cube>
+
+	<!-- 一级事件 -->
+	<Cube name="FirstLevelEvent" caption="%{cube.first_level_event}">
+		<Table name="first_level_event" />
+
+		<Dimension name="Event" caption="%{dim.event}" >
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="event_id" uniqueMembers="true" caption="%{event.name}">
+					<NameExpression>
+						<SQL dialect="mysql">
+CASE WHEN event_id = 'Main' THEN '首页'
+WHEN event_id = 'MyStarFragment' THEN '明星'
+WHEN event_id = 'Community' THEN '社区'
+WHEN event_id = 'InteractFragment' THEN '发现'
+WHEN event_id = 'MyFragment' THEN '我的'
+ELSE event_id END
+						</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Channel" source="Channel" foreignKey="customer_id" />
+		<DimensionUsage name="Version" source="Version" foreignKey="version" caption="%{dim.app.version.current}" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" />
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="device_id" aggregator="distinct-count" formatString="#,###" caption="%{event.user}"/>
+		<!-- 点击数 -->
+		<Measure name="Click Times" column="click_times" aggregator="sum" formatString="#,###" caption="%{event.times}"/>
+	</Cube>
+
+	<!-- 二级事件 -->
+	<Cube name="SubLevelEvent" caption="%{cube.sub_level_event}">
+		<Table name="sub_level_event" />
+
+		<Dimension name="Event" caption="%{dim.event}" >
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="Name" column="event_id" uniqueMembers="true" caption="%{event.name}">
+					<NameExpression>
+						<SQL dialect="mysql">
+CASE WHEN event_id = 'recreate_sub' THEN '资讯'
+WHEN event_id = 'video_sub' THEN '视频'
+ELSE event_id END
+						</SQL>
+					</NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+
+		<!-- 栏目ID -->
+		<Dimension name="acc" foreignKey="acc" caption="%{event.acc}">
+			<Hierarchy primaryKey="id" primaryKeyTable="dim_info" hasAll="true" allLevelName="%{dim.all}">
+				<Join leftKey="category_id" rightKey="id">
+					<Table name="dim_info" alias="a" />
+					<Table name="dim_info_cat" alias="b" />
+				</Join>
+				<Level name="Name" table="b" column="name" uniqueMembers="true" caption="%{event.category}" />
+			</Hierarchy>
+		</Dimension>
+
+		<DimensionUsage name="Channel" source="Channel" foreignKey="customer_id" />
+		<DimensionUsage name="Version" source="Version" foreignKey="version" caption="%{dim.app.version.current}" />
+		<DimensionUsage name="CreateDate" source="Date" foreignKey="create_date" />
+
+		<!-- 用户数 -->
+		<Measure name="User Count" column="device_id" aggregator="distinct-count" formatString="#,###" caption="%{event.user}"/>
+		<!-- 点击数 -->
+		<Measure name="Click Times" column="click_times" aggregator="sum" formatString="#,###" caption="%{event.times}"/>
+	</Cube>
+
+	<!-- V3.0版本首页点击Cube -->
+	<Cube name="homepage" caption="%{event.homepage}">
+		<Table name="fact_event_homepage" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 点击事件名称 -->
+		<Dimension name="event_name" caption="%{event.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="event_name" column="event_name" uniqueMembers="true" caption="%{event.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 事件类型 -->
+		<Dimension name="label" caption="%{event.label}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="label" column="label" uniqueMembers="true" caption="%{event.label}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 内容ID-->
+		<Dimension name="acc" caption="%{event.acc}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="acc" column="acc" uniqueMembers="true" caption="%{event.acc}" >
+						<NameExpression>
+                            <SQL dialect="mysql">CONCAT(acc, '')</SQL>
+                        </NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 用户数 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{event.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{event.times}"/>
+	</Cube>
+	
+	<!-- V3.0版本明星页点击Cube -->
+	<Cube name="star" caption="%{event.star}">
+		<Table name="fact_event_star" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 点击事件名称 -->
+		<Dimension name="event_name" caption="%{event.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="event_name" column="event_name" uniqueMembers="true" caption="%{event.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 事件类型 -->
+		<Dimension name="label" caption="%{event.label}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="label" column="label" uniqueMembers="true" caption="%{event.label}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 内容ID-->
+		<Dimension name="acc" caption="%{event.acc}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="acc" column="acc" uniqueMembers="true" caption="%{event.acc}" >
+						<NameExpression>
+                            <SQL dialect="mysql">CONCAT(acc, '')</SQL>
+                        </NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 用户数 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{event.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{event.times}"/>
+	</Cube>
+	
+	<!-- V3.0版本社区页点击Cube -->
+	<Cube name="community" caption="%{event.community}">
+		<Table name="fact_event_community" />
+
+		<!-- 点击日期 -->
+		<DimensionUsage name="ClickDate" source="Date" foreignKey="click_date" />
+		
+		<!-- 点击事件名称 -->
+		<Dimension name="event_name" caption="%{event.name}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="event_name" column="event_name" uniqueMembers="true" caption="%{event.name}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 事件类型 -->
+		<Dimension name="label" caption="%{event.label}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="label" column="label" uniqueMembers="true" caption="%{event.label}"/>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 内容ID-->
+		<Dimension name="acc" caption="%{event.acc}">
+			<Hierarchy hasAll="true" allLevelName="%{dim.all}">
+				<Level name="acc" column="acc" uniqueMembers="true" caption="%{event.acc}" >
+						<NameExpression>
+                            <SQL dialect="mysql">CONCAT(acc, '')</SQL>
+                        </NameExpression>
+				</Level>
+			</Hierarchy>
+		</Dimension>
+		
+		<!-- 用户数 -->
+		<Measure name="User Count" column="click_users" aggregator="sum" caption="%{event.user}"/>
+		<Measure name="Click Times" column="click_times" aggregator="sum" caption="%{event.times}"/>
+	</Cube>
+
+	<!-- 角色权限 -->
+	<!-- 广告运营 -->
+	<Role name="ROLE_ADOP">
+		<SchemaGrant access="none" />
+	</Role>
+
+	<!-- 产品运营 -->
+	<Role name="ROLE_POP">
+		<SchemaGrant access="none" />
+	</Role>
+
+</Schema>
+
+
+
+
+
+
+
+
+

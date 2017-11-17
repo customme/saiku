@@ -1,0 +1,53 @@
+WITH MEMBER [Measures].[2G占比] AS
+[Device.Network].[2G] / [Device.Network].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[3G占比] AS
+[Device.Network].[3G] / [Device.Network].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[4G占比] AS
+[Device.Network].[4G] / [Device.Network].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[WIFI占比] AS
+[Device.Network].[WIFI] / [Device.Network].DefaultMember,
+FORMAT_STRING="0.00%"
+
+MEMBER [Measures].[未知占比] AS
+[Device.Network].[unknown] / [Device.Network].DefaultMember,
+FORMAT_STRING="0.00%"
+
+// 用户数大于50，且WIFI+未知占比大于80%
+MEMBER [Measures].[WIFI+未知占比] AS
+([Device.Network].[WIFI] + [Device.Network].[unknown]) / [Device.Network].DefaultMember,
+FORMAT_STRING=Iif(
+    [Measures].[User Count] > 50 AND [Measures].[WIFI+未知占比] > 0.8,
+    '|0.00%|style=red',
+    '|0.00%|'
+)
+
+SELECT
+NON EMPTY {
+    [Measures].[User Count],
+    [Measures].[2G占比],
+    [Measures].[3G占比],
+    [Measures].[4G占比],
+    [Measures].[WIFI占比],
+    [Measures].[未知占比],
+    [Measures].[WIFI+未知占比]
+} ON COLUMNS,
+NON EMPTY {
+    Order(
+		[Channel].[Code].Members,
+		[Measures].[WIFI占比],
+		DESC
+	)
+} ON ROWS
+FROM [Device]
+WHERE {
+    CrossJoin(
+        [Device.Platform].[android],
+        {CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-7) : CurrentDateMember([CreateDate],'"[CreateDate].[Day]"\.[yyyy-mm-dd]').Lead(-1)}
+    )
+}
