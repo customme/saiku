@@ -323,6 +323,7 @@ public class Query2Resource {
             if(name == null || name.equals("")) {
                 name = SaikuProperties.webExportExcelName + "." + SaikuProperties.webExportExcelFormat;
             }
+            name = new String(name.getBytes("UTF-8"), "ISO-8859-1");
             return Response.ok(doc, MediaType.APPLICATION_OCTET_STREAM).header(
                     "content-disposition",
                     "attachment; filename = " + name).header(
@@ -373,6 +374,7 @@ public class Query2Resource {
             if(name == null || name.equals("")) {
                  name = SaikuProperties.webExportCsvName;
             }
+            name = new String(name.getBytes("UTF-8"), "ISO-8859-1");
 
             return Response.ok(doc, MediaType.APPLICATION_OCTET_STREAM).header(
                     "content-disposition",
@@ -642,6 +644,7 @@ public class Query2Resource {
             if(name==null || name.equals("")){
                 name = "export";
             }
+            name = new String(name.getBytes("UTF-8"), "ISO-8859-1");
             return Response.ok(doc).type("application/pdf").header(
                     "content-disposition",
                     "attachment; filename = "+name+".pdf").header(
