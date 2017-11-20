@@ -1,0 +1,42 @@
+WITH SET [Products] AS
+{
+	[Product].[Product].[每忆相册],
+	[Product].[Product].[文管王],
+	[Product].[Product].[碰脸解锁SDK_系统],
+	[Product].[Product].[盈搜]
+}
+
+SET [Dates] AS
+{CurrentDateMember([Date].[Daily], 'yyyy-mm-dd').Lag(7) : CurrentDateMember([Date].[Daily], 'yyyy-mm-dd')}
+
+MEMBER [Measures].[1-10秒占比] AS
+[Duration].[Range_1].[1-10秒] / [Duration].[Range_1].DefaultMember,
+FORMAT_STRING="Percent"
+
+MEMBER [Measures].[10-30秒占比] AS
+[Duration].[Range_1].[10-30秒] / [Duration].[Range_1].DefaultMember,
+FORMAT_STRING="Percent"
+
+MEMBER [Measures].[30-60秒占比] AS
+[Duration].[Range_1].[30-60秒] / [Duration].[Range_1].DefaultMember,
+FORMAT_STRING="Percent"
+
+MEMBER [Measures].[大于60秒占比] AS
+[Duration].[Range_1].[大于60秒] / [Duration].[Range_1].DefaultMember,
+FORMAT_STRING="Percent"
+
+SELECT
+NON EMPTY CrossJoin(
+	[Products],
+	{
+		[Measures].[1-10秒占比],
+		[Measures].[10-30秒占比],
+		[Measures].[30-60秒占比],
+		[Measures].[大于60秒占比],
+		[Measures].[Use Duration Avg]
+	}
+) ON COLUMNS,
+NON EMPTY {
+	[Dates]
+} ON ROWS
+FROM [Use Duration]
