@@ -50,6 +50,8 @@
   "Line": "折线图",
   "Area": "面积图",
   "Dot": "散点图",
+  "Radar": "雷达图",
+  "Time Wheel": "时间轮",
   "Show Explain Plan": "解释查询",
   "Drill through on cell": "下钻",
   "Export Drill-Through on cell to CSV": "导出下钻数据",
