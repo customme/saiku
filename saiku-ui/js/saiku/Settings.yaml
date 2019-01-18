@@ -8,7 +8,7 @@
 #   - YAML Lint: https://codebeautify.org/yaml-validator
 #   - YAML Validator: https://yamlvalidator.com/
 # =======================================================================
-VERSION: Saiku-
+VERSION: Saiku-3.17
 LICENSE: null
 BIPLUGIN: false
 BIPLUGIN5: false
@@ -26,7 +26,7 @@ I18N_LOCALE: en
 # Number of erroneous ajax calls in a row before UI cant recover
 ERROR_TOLERANCE: 3
 QUERY_PROPERTIES:
-  saiku.olap.query.automatic_execution: true
+  saiku.olap.query.automatic_execution: false
   saiku.olap.query.nonempty: true
   saiku.olap.query.nonempty.rows: true
   saiku.olap.query.nonempty.columns: true
@@ -57,7 +57,7 @@ DEMO: false
 TELEMETRY_SERVER: 'http://telemetry.analytical-labs.com:7000'
 LOCALSTORAGE_EXPIRATION: 36000000 # 10 hours, in ms
 UPGRADE: true
-EVALUATION_PANEL_LOGIN: true
+EVALUATION_PANEL_LOGIN: false
 QUERY_OVERWRITE_WARNING: true
 MAPS: true
 MAPS_TYPE: OSM # OSM || GMAPS
@@ -90,7 +90,7 @@ DEFAULT_REPORTS:
 PARENT_MEMBER_DIMENSION: false
 EXT_DATASOURCE_PROPERTIES: false
 SHOW_USER_MANAGEMENT: true
-SHOW_REFRESH_NONADMIN: false
+SHOW_REFRESH_NONADMIN: true
 EMPTY_VALUE_CHARACTER: '-'
 HIDE_EMPTY_ROWS: true
 MEASURE_GROUPS_COLLAPSED: false
