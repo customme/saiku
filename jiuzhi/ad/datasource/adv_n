@@ -1,0 +1,8 @@
+type=OLAP
+name=adv_n
+driver=mondrian.olap4j.MondrianOlap4jDriver
+location=jdbc:mondrian:Jdbc=jdbc:mysql://10.10.10.64:3306/ad_dw;Catalog=mondrian:///datasources/adv_n.xml;DynamicSchemaProcessor=mondrian.i18n.LocalizingDynamicSchemaProcessor;Locale=zh_CN;UseContentChecksum=true
+username=root
+password=mysql
+security.enabled=true
+security.type=one2one

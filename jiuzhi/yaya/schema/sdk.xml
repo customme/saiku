@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema name="%{sdk}" metamodelVersion="4.0" xmlns="http://mondrian.pentaho.com/schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://mondrian.pentaho.com/schema http://mondrian.pentaho.com/schema/mondrian.xsd">
+
+	<!-- 物理模型 -->
+	<PhysicalSchema>
+		<Query alias="v_date" keyColumn="id">
+			<ExpressionView>
+				<SQL dialect="mysql"><![CDATA[SELECT * FROM dim_date WHERE id >= 20151219 AND id <= CURDATE()]]></SQL>
+			</ExpressionView>
+		</Query>
+		<InlineTable alias="v_yorn">
+			<ColumnDefs>
+				<ColumnDef name="id" type="Integer" />
+				<ColumnDef name="name" type="String" />
+			</ColumnDefs>
+			<Key>
+				<Column name="id" />
+			</Key>
+			<Rows>
+				<Row>
+					<Value column="id">0</Value>
+					<Value column="name">N</Value>
+				</Row>
+				<Row>
+					<Value column="id">1</Value>
+					<Value column="name">Y</Value>
+				</Row>
+			</Rows>
+		</InlineTable>
+		<InlineTable alias="v_logtype">
+			<ColumnDefs>
+				<ColumnDef name="id" type="Integer" />
+				<ColumnDef name="name" type="String" />
+			</ColumnDefs>
+			<Key>
+				<Column name="id" />
+			</Key>
+			<Rows>
+				<Row>
+					<Value column="id">1</Value>
+					<Value column="name">主动</Value>
+				</Row>
+				<Row>
+					<Value column="id">2</Value>
+					<Value column="name">定时</Value>
+				</Row>
+			</Rows>
+		</InlineTable>
+		<Table name="dim_cohort" keyColumn="id" />
+		<Table name="dim_channel" keyColumn="id" />
+		<Table name="dim_product" keyColumn="id" />
+		<Table name="dim_version" keyColumn="id" />
+		<Table name="dim_isp" keyColumn="id" />
+		<Table name="dim_network" keyColumn="name" />
+		<Table name="dim_apppath" keyColumn="id" />
+		<Table name="dim_device" keyColumn="uuid" />
+		<Link source="dim_isp" target="dim_device" foreignKeyColumn="isp_code" />
+		<Link source="dim_network" target="dim_device" foreignKeyColumn="network" />
+		<Link source="v_yorn" target="dim_device" foreignKeyColumn="have_vpn" />
+		<Table name="fact_client">
+			<ColumnDefs>
+				<CalculatedColumnDef name="is_upgraded">
+					<ExpressionView>
+						<SQL dialect="mysql">IF(version != init_version, 1, 0)</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+			</ColumnDefs>
+		</Table>
+		<Table name="fact_active" />
+		<Table name="agg_lc_01_client" />
+		<Table name="agg_l_02_client" />
+		<Table name="agg_l_03_client" />
+		<Table name="agg_l_04_client" />
+		<Table name="agg_l_05_client" />
+		<Table name="agg_l_06_client" />
+		<Table name="agg_l_07_client" />
+	</PhysicalSchema>
+
+	<!-- 逻辑模型 -->
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" table="v_date" key="Date" type="TIME" caption="%{date}">
+		<Attributes>
+			<Attribute name="Year" keyColumn="the_year" levelType="TimeYears" hasHierarchy="false" />
+			<Attribute name="HalfYear" levelType="TimeHalfYear" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="half_year" />
+				</Key>
+				<Name>
+					<Column name="half_year" />
+				</Name>
+			</Attribute>
+			<Attribute name="Quarter" levelType="TimeQuarters" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="quarter_num" />
+				</Key>
+				<Name>
+					<Column name="en_quarter" />
+				</Name>
+			</Attribute>
+			<Attribute name="Month" levelType="TimeMonths" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="month_num" />
+				</Key>
+				<Name>
+					<Column name="month_num" />
+				</Name>
+			</Attribute>
+			<Attribute name="Week" levelType="TimeWeeks" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="week_num" />
+				</Key>
+				<Name>
+					<Column name="week_num" />
+				</Name>
+			</Attribute>
+			<Attribute name="Day" keyColumn="id" nameColumn="day_num" levelType="TimeDays" hasHierarchy="false" />
+			<Attribute name="Date" keyColumn="id" nameColumn="the_day" hasHierarchy="false" />
+		</Attributes>
+		<Hierarchies>
+			<Hierarchy name="Monthly">
+				<Level attribute="Year" caption="%{year}" />
+				<Level attribute="HalfYear" caption="%{half_year}" />
+				<Level attribute="Quarter" caption="%{quarter}" />
+				<Level attribute="Month" caption="%{month}" />
+				<Level attribute="Day" caption="%{day}" />
+			</Hierarchy>
+			<Hierarchy name="Daily">
+				<Level attribute="Date" caption="%{date}" />
+			</Hierarchy>
+		</Hierarchies>
+	</Dimension>
+
+	<!-- 设备维度 -->
+	<Dimension name="Device" table="dim_device" key="UUID" caption="%{device}">
+		<Attributes>
+			<Attribute name="Platform" keyColumn="platform" hasHierarchy="false" />
+			<Attribute name="OSVersion" keyColumn="os_version" hasHierarchy="false" />
+			<Attribute name="Network" table="dim_network" keyColumn="name" orderByColumn="priority" hierarchyCaption="%{network}" caption="%{type}" />
+			<Attribute name="Model" keyColumn="model_name" caption="%{model}" />
+			<Attribute name="Resolution" keyColumn="resolution" caption="%{resolution}" />
+			<Attribute name="Country" keyColumn="country" hasHierarchy="false" />
+			<Attribute name="Province" keyColumn="region" hasHierarchy="false" />
+			<Attribute name="City" keyColumn="city" hasHierarchy="false" />
+			<Attribute name="ISPName" table="dim_isp" keyColumn="isp_name" hasHierarchy="false" />
+			<Attribute name="ISPCode" table="dim_isp" keyColumn="id" hasHierarchy="false" />
+			<Attribute name="VPN" table="v_yorn" keyColumn="id" nameColumn="name" hierarchyCaption="%{used_vpn}" caption="%{yesorno}" />
+			<Attribute name="UUID" keyColumn="uuid" hasHierarchy="false" />
+		</Attributes>
+		<Hierarchies>
+			<Hierarchy name="Platform" caption="%{platform}">
+				<Level attribute="Platform" caption="%{name}" />
+				<Level attribute="OSVersion" caption="%{version}" />
+			</Hierarchy>
+			<Hierarchy name="Region" caption="%{region}">
+				<Level attribute="Country" caption="%{country}" />
+				<Level attribute="Province" caption="%{province}" />
+				<Level attribute="City" caption="%{city}" />
+			</Hierarchy>
+			<Hierarchy name="ISP" caption="%{isp}">
+				<Level attribute="ISPName" caption="%{name}" />
+				<Level attribute="ISPCode" caption="%{code}" />
+			</Hierarchy>
+		</Hierarchies>
+	</Dimension>
+
+	<!-- 日期间隔维度 -->
+	<Dimension name="DateDiff" table="dim_cohort" key="Day" caption="%{date_diff}">
+		<Attributes>
+			<Attribute name="Day" keyColumn="id" caption="%{day_diff}" />
+		</Attributes>
+	</Dimension>
+
+	<!-- App版本维度 -->
+	<Dimension name="Version" table="dim_version" key="Num" caption="%{version}">
+		<Attributes>
+			<Attribute name="Num" keyColumn="id" caption="%{version_num}" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 渠道维度 -->
+	<Dimension name="Channel" table="dim_channel" key="Id" caption="%{channel}">
+		<Attributes>
+			<Attribute name="Name" keyColumn="channel_name" hasHierarchy="false" />
+			<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+		</Attributes>
+		<Hierarchies>
+			<Hierarchy name="Channel">
+				<Level attribute="Name" caption="%{name}" />
+				<Level attribute="Id" caption="%{code}" />
+			</Hierarchy>
+		</Hierarchies>
+	</Dimension>
+
+	<!-- 产品维度 -->
+	<Dimension name="Product" table="dim_product" key="Id" caption="%{product}">
+		<Attributes>
+			<Attribute name="Name" keyColumn="id" nameColumn="name" hasHierarchy="false" />
+			<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+		</Attributes>
+		<Hierarchies>
+			<Hierarchy name="Product">
+				<Level attribute="Name" caption="%{name}" />
+				<Level attribute="Id" caption="%{code}" />
+			</Hierarchy>
+		</Hierarchies>
+	</Dimension>
+
+	<!-- 是否维度 -->
+	<Dimension name="Yorn" table="v_yorn" key="Id">
+		<Attributes>
+			<Attribute name="Name" keyColumn="id" nameColumn="name" caption="%{yesorno}" />
+			<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 网络类型维度 -->
+	<Dimension name="Network" table="dim_network" key="Name" caption="%{network}">
+		<Attributes>
+			<Attribute name="Name" keyColumn="name" orderByColumn="priority" caption="%{type}" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 次数维度 -->
+	<Dimension name="Times" table="dim_cohort" key="Id">
+		<Attributes>
+			<Attribute name="Range_1" keyColumn="times_1" nameColumn="times_1_desc" caption="%{times_range}" />
+			<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 新增用户Cube -->
+	<Cube name="Client" caption="%{new_user}">
+		<Dimensions>
+			<Dimension source="Date" caption="%{create_date}" />
+			<Dimension source="Device" />
+			<Dimension source="Channel" />
+			<Dimension name="InitVersion" source="Version" caption="%{initial_version}" />
+			<Dimension source="Version" caption="%{current_version}" />
+			<Dimension source="Product" />
+			<Dimension name="Upgrade" source="Yorn" caption="%{is_upgraded}" />
+			<Dimension name="Silent" source="Yorn" caption="%{is_silent}" />
+
+			<!-- App安装路径维度 -->
+			<Dimension name="AppPath" table="dim_apppath" key="Id" caption="%{app_path}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="id" nameColumn="path" caption="%{app_path}" />
+					<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_client" name="%{base_group}">
+				<Measures>
+					<!-- 新增用户 -->
+					<Measure name="New User Count" column="uuid" aggregator="count" formatString="#,###" caption="%{new_user}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="Device" foreignKeyColumn="uuid" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="customer_id" />
+					<ForeignKeyLink dimension="InitVersion" foreignKeyColumn="init_version" />
+					<ForeignKeyLink dimension="Version" foreignKeyColumn="version" />
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="AppPath" foreignKeyColumn="pkg_path" />
+					<ForeignKeyLink dimension="Silent" foreignKeyColumn="is_silent" />
+					<ForeignKeyLink dimension="Upgrade" foreignKeyColumn="is_upgraded" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_lc_01_client" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<CopyLink dimension="Date" attribute="Month">
+						<Column aggColumn="the_year" table="v_date" name="the_year" />
+						<Column aggColumn="half_year" table="v_date" name="half_year" />
+						<Column aggColumn="quarter_num" table="v_date" name="quarter_num" />
+						<Column aggColumn="month_num" table="v_date" name="month_num" />
+					</CopyLink>
+					<NoLink dimension="Device" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="InitVersion" />
+					<NoLink dimension="Version" />
+					<NoLink dimension="AppPath" />
+					<NoLink dimension="Silent" />
+					<NoLink dimension="Upgrade" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_l_02_client" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<NoLink dimension="Device" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="InitVersion" />
+					<NoLink dimension="Version" />
+					<NoLink dimension="AppPath" />
+					<NoLink dimension="Silent" />
+					<NoLink dimension="Upgrade" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_l_03_client" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<NoLink dimension="Device" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="customer_id" />
+					<NoLink dimension="InitVersion" />
+					<NoLink dimension="Version" />
+					<NoLink dimension="AppPath" />
+					<NoLink dimension="Silent" />
+					<NoLink dimension="Upgrade" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_l_04_client" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<NoLink dimension="Device" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="InitVersion" />
+					<NoLink dimension="Version" />
+					<ForeignKeyLink dimension="AppPath" foreignKeyColumn="pkg_path" />
+					<NoLink dimension="Silent" />
+					<NoLink dimension="Upgrade" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_l_05_client" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<NoLink dimension="Device" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="InitVersion" />
+					<ForeignKeyLink dimension="Version" foreignKeyColumn="version" />
+					<NoLink dimension="AppPath" />
+					<NoLink dimension="Silent" />
+					<NoLink dimension="Upgrade" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_l_06_client" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<NoLink dimension="Device" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="InitVersion" />
+					<NoLink dimension="Version" />
+					<NoLink dimension="AppPath" />
+					<NoLink dimension="Silent" />
+					<ForeignKeyLink dimension="Upgrade" foreignKeyColumn="is_upgrade" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_l_07_client" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<NoLink dimension="Device" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="InitVersion" />
+					<ForeignKeyLink dimension="Version" foreignKeyColumn="version" />
+					<NoLink dimension="AppPath" />
+					<NoLink dimension="Silent" />
+					<ForeignKeyLink dimension="Upgrade" foreignKeyColumn="is_upgrade" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<NamedSets>
+			<NamedSet name="Online Channels">
+				<Formula>
+					{
+						[Channel].[Channel].[Id].[SX910032001], [Channel].[Channel].[Id].[SX360031001], [Channel].[Channel].[Id].[SXWD0030001],
+						[Channel].[Channel].[Id].[SXBD0029001], [Channel].[Channel].[Id].[SXAZ0028001], [Channel].[Channel].[Id].[SXAZ0027001],
+	 					[Channel].[Channel].[Id].[SXJF0026001], [Channel].[Channel].[Id].[SXLX0024001], [Channel].[Channel].[Id].[SX3G0022001],
+	 					[Channel].[Channel].[Id].[SXAR0021001], [Channel].[Channel].[Id].[SXVI0020001], [Channel].[Channel].[Id].[SXLQ0019001],
+						[Channel].[Channel].[Id].[SXYH0016001], [Channel].[Channel].[Id].[SXMY0014001], [Channel].[Channel].[Id].[SXHW0013001],
+						[Channel].[Channel].[Id].[SXXM0012001], [Channel].[Channel].[Id].[SXMZ0011001], [Channel].[Channel].[Id].[SXOP0010001],
+						[Channel].[Channel].[Id].[SXZL0009001], [Channel].[Channel].[Id].[SXSJ0007001], [Channel].[Channel].[Id].[SXND0005001],
+						[Channel].[Channel].[Id].[SXTX0001001], [Channel].[Channel].[Id].[SXSG0110009], [Channel].[Channel].[Id].[SXWN0001001],
+						[Channel].[Channel].[Id].[SXYY0004001]
+					}
+				</Formula>
+			</NamedSet>
+		</NamedSets>
+	</Cube>
+
+	<!-- 活跃用户Cube -->
+	<Cube name="Active" caption="%{active_user}">
+		<Dimensions>
+			<Dimension name="CreateDate" source="Date" caption="%{create_date}" />
+			<Dimension name="ActiveDate" source="Date" caption="%{active_date}" />
+			<Dimension source="Device" />
+			<Dimension source="Channel" />
+			<Dimension name="InitVersion" source="Version" caption="%{initial_version}" />
+			<Dimension source="Version" caption="%{current_version}" />
+			<Dimension source="Product" />
+			<Dimension source="DateDiff" />
+			<Dimension name="VisitTimes" source="Times" caption="%{visit_times}" />
+
+			<!-- 日志类型维度 -->
+			<Dimension name="LogType" table="v_logtype" key="Id" caption="%{log_type}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="id" nameColumn="name" caption="%{log_type}" />
+					<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_active" name="%{base_group}">
+				<Measures>
+					<!-- 活跃用户 -->
+					<Measure name="Active User Count" column="uuid" aggregator="distinct-count" caption="%{active_user}" />
+					<!-- 访问次数 -->
+					<Measure name="Visit Times" column="visit_times" aggregator="sum" caption="%{visit_times}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="CreateDate" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="ActiveDate" foreignKeyColumn="active_date" />
+					<ForeignKeyLink dimension="Device" foreignKeyColumn="uuid" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="customer_id" />
+					<ForeignKeyLink dimension="InitVersion" foreignKeyColumn="init_version" />
+					<ForeignKeyLink dimension="Version" foreignKeyColumn="version" />
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="VisitTimes" foreignKeyColumn="visit_times" />
+					<ForeignKeyLink dimension="LogType" foreignKeyColumn="log_type" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<!-- 人均访问次数 -->
+			<CalculatedMember name="Avg Visit Times" dimension="Measures" formatString="#,###.0" caption="%{user_visit_times}">
+				<Formula>[Measures].[Visit Times] / [Measures].[Active User Count]</Formula>
+			</CalculatedMember>
+			<!-- 新增用户 -->
+			<CalculatedMember name="New User Count" dimension="Measures" formatString="#,###" caption="%{new_user}">
+				<Formula>Aggregate(CrossJoin([DateDiff].[Day].[0], [LogType].[Name].[Name].AllMembers))</Formula>
+			</CalculatedMember>
+			<!-- 新增用户占比 -->
+			<CalculatedMember name="New User Percent" dimension="Measures" formatString="Percent" caption="%{new_user_pct}">
+				<Formula>[Measures].[New User Count] / [Measures].[Active User Count]</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+
+		<NamedSets>
+			<NamedSet name="Online Channels">
+				<Formula>
+					{
+						[Channel].[Channel].[Id].[SX910032001], [Channel].[Channel].[Id].[SX360031001], [Channel].[Channel].[Id].[SXWD0030001],
+						[Channel].[Channel].[Id].[SXBD0029001], [Channel].[Channel].[Id].[SXAZ0028001], [Channel].[Channel].[Id].[SXAZ0027001],
+	 					[Channel].[Channel].[Id].[SXJF0026001], [Channel].[Channel].[Id].[SXLX0024001], [Channel].[Channel].[Id].[SX3G0022001],
+	 					[Channel].[Channel].[Id].[SXAR0021001], [Channel].[Channel].[Id].[SXVI0020001], [Channel].[Channel].[Id].[SXLQ0019001],
+						[Channel].[Channel].[Id].[SXYH0016001], [Channel].[Channel].[Id].[SXMY0014001], [Channel].[Channel].[Id].[SXHW0013001],
+						[Channel].[Channel].[Id].[SXXM0012001], [Channel].[Channel].[Id].[SXMZ0011001], [Channel].[Channel].[Id].[SXOP0010001],
+						[Channel].[Channel].[Id].[SXZL0009001], [Channel].[Channel].[Id].[SXSJ0007001], [Channel].[Channel].[Id].[SXND0005001],
+						[Channel].[Channel].[Id].[SXTX0001001], [Channel].[Channel].[Id].[SXSG0110009], [Channel].[Channel].[Id].[SXWN0001001],
+						[Channel].[Channel].[Id].[SXYY0004001]
+					}
+				</Formula>
+			</NamedSet>
+		</NamedSets>
+	</Cube>
+
+	<!-- 留存用户Cube -->
+	<Cube name="Keep" caption="%{keep_user}">
+		<Dimensions>
+			<Dimension name="CreateDate" source="Date" caption="%{create_date}" />
+			<Dimension source="Device" />
+			<Dimension source="Channel" />
+			<Dimension name="InitVersion" source="Version" caption="%{initial_version}" />
+			<Dimension source="Product" />
+			<Dimension source="DateDiff" visible="false" />
+
+			<!-- 日志类型维度 -->
+			<Dimension name="LogType" table="v_logtype" key="Id" caption="%{log_type}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="id" nameColumn="name" caption="%{log_type}" />
+					<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_active" name="%{base_group}">
+				<Measures>
+					<!-- 活跃用户 -->
+					<Measure name="Active User Count" column="uuid" aggregator="distinct-count" visible="false" caption="%{active_user}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="CreateDate" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="Device" foreignKeyColumn="uuid" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="customer_id" />
+					<ForeignKeyLink dimension="InitVersion" foreignKeyColumn="init_version" />
+					<ForeignKeyLink dimension="Product" foreignKeyColumn="app_key" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="LogType" foreignKeyColumn="log_type" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<!-- 新增用户 -->
+			<CalculatedMember name="New User Count" dimension="Measures" formatString="#,###" caption="%{new_user}">
+				<Formula>Aggregate(CrossJoin([DateDiff].[Day].[0], [LogType].[Name].[Name].AllMembers))</Formula>
+			</CalculatedMember>
+			<!-- 次日留存率 -->
+			<CalculatedMember name="Keep User Rate 1" dimension="Measures" caption="%{keep_rate_1}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[1] / [Measures].[New User Count], NULL)</Formula>
+				<CalculatedMemberProperty name="FORMAT_STRING" expression="Iif([Measures].[Keep User Rate 1] &lt; 0.2, '|0.00%|style=green', '|0.00%|style=red')" />
+			</CalculatedMember>
+			<!-- 2日留存率 -->
+			<CalculatedMember name="Keep User Rate 2" dimension="Measures" formatString="Percent" caption="%{keep_rate_2}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[2] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 3日留存率 -->
+			<CalculatedMember name="Keep User Rate 3" dimension="Measures" formatString="Percent" caption="%{keep_rate_3}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[3] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 4日留存率 -->
+			<CalculatedMember name="Keep User Rate 4" dimension="Measures" formatString="Percent" caption="%{keep_rate_4}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[4] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 5日留存率 -->
+			<CalculatedMember name="Keep User Rate 5" dimension="Measures" formatString="Percent" caption="%{keep_rate_5}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[5] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 6日留存率 -->
+			<CalculatedMember name="Keep User Rate 6" dimension="Measures" formatString="Percent" caption="%{keep_rate_6}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[6] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 7日留存率 -->
+			<CalculatedMember name="Keep User Rate 7" dimension="Measures" formatString="Percent" caption="%{keep_rate_7}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[7] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 30日留存率 -->
+			<CalculatedMember name="Keep User Rate 30" dimension="Measures" formatString="Percent" caption="%{keep_rate_30}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[30] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 3日内留存率 -->
+			<CalculatedMember name="Keep User Rate In 3" dimension="Measures" formatString="Percent" caption="%{keep_rate_in3}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[3]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 7日内留存率 -->
+			<CalculatedMember name="Keep User Rate In 7" dimension="Measures" formatString="Percent" caption="%{keep_rate_in7}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[7]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 14日内留存率 -->
+			<CalculatedMember name="Keep User Rate In 14" dimension="Measures" formatString="Percent" caption="%{keep_rate_in14}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[14]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 30日内留存率 -->
+			<CalculatedMember name="Keep User Rate In 30" dimension="Measures" formatString="Percent" caption="%{keep_rate_in30}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[30]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 7日后留存率 -->
+			<CalculatedMember name="Keep User Rate Out 7" dimension="Measures" formatString="Percent" caption="%{keep_rate_out7}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[8] : [DateDiff].[Day].[50]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 14日后留存率 -->
+			<CalculatedMember name="Keep User Rate Out 14" dimension="Measures" formatString="Percent" caption="%{keep_rate_out14}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[15] : [DateDiff].[Day].[50]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 30日后留存率 -->
+			<CalculatedMember name="Keep User Rate Out 30" dimension="Measures" formatString="Percent" caption="%{keep_rate_out30}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[31] : [DateDiff].[Day].[50]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+
+		<NamedSets>
+			<NamedSet name="Online Channels">
+				<Formula>
+					{
+						[Channel].[Channel].[Id].[SX910032001], [Channel].[Channel].[Id].[SX360031001], [Channel].[Channel].[Id].[SXWD0030001],
+						[Channel].[Channel].[Id].[SXBD0029001], [Channel].[Channel].[Id].[SXAZ0028001], [Channel].[Channel].[Id].[SXAZ0027001],
+	 					[Channel].[Channel].[Id].[SXJF0026001], [Channel].[Channel].[Id].[SXLX0024001], [Channel].[Channel].[Id].[SX3G0022001],
+	 					[Channel].[Channel].[Id].[SXAR0021001], [Channel].[Channel].[Id].[SXVI0020001], [Channel].[Channel].[Id].[SXLQ0019001],
+						[Channel].[Channel].[Id].[SXYH0016001], [Channel].[Channel].[Id].[SXMY0014001], [Channel].[Channel].[Id].[SXHW0013001],
+						[Channel].[Channel].[Id].[SXXM0012001], [Channel].[Channel].[Id].[SXMZ0011001], [Channel].[Channel].[Id].[SXOP0010001],
+						[Channel].[Channel].[Id].[SXZL0009001], [Channel].[Channel].[Id].[SXSJ0007001], [Channel].[Channel].[Id].[SXND0005001],
+						[Channel].[Channel].[Id].[SXTX0001001], [Channel].[Channel].[Id].[SXSG0110009], [Channel].[Channel].[Id].[SXWN0001001],
+						[Channel].[Channel].[Id].[SXYY0004001]
+					}
+				</Formula>
+			</NamedSet>
+		</NamedSets>
+	</Cube>
+
+	<!-- 角色权限 -->
+	<Role name="ROLE_POP">
+		<SchemaGrant access="none" />
+	</Role>
+	<Role name="ROLE_ADOP">
+		<SchemaGrant access="none" />
+	</Role>
+	<Role name="ROLE_ADOPN">
+		<SchemaGrant access="none" />
+	</Role>
+
+</Schema>

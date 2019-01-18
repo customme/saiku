@@ -1,0 +1,8 @@
+type=OLAP
+name=yaya
+driver=mondrian.olap4j.MondrianOlap4jDriver
+location=jdbc:mondrian:Jdbc=jdbc:mysql://157.255.237.135:17206/sdk_ndw;Catalog=mondrian:///datasources/yaya.xml;DynamicSchemaProcessor=mondrian.i18n.LocalizingDynamicSchemaProcessor;Locale=zh_CN;UseContentChecksum=true
+username=root
+password=xcHu5r5kNz2j5izr@132135664
+security.enabled=true
+security.type=one2one

@@ -1,0 +1,8 @@
+type=OLAP
+name=nad
+driver=mondrian.olap4j.MondrianOlap4jDriver
+location=jdbc:mondrian:Jdbc=jdbc:mysql://157.255.237.135:17106/nad_dw;Catalog=mondrian:///datasources/nad.xml;DynamicSchemaProcessor=mondrian.i18n.LocalizingDynamicSchemaProcessor;Locale=zh_CN;UseContentChecksum=true
+username=root
+password=Zv7oBWPoiOyLOwoh@a124d6446
+security.enabled=true
+security.type=one2one

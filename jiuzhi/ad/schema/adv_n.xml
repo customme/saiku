@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema name="%{ad_adv_n}" metamodelVersion="4.0" xmlns="http://mondrian.pentaho.com/schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://mondrian.pentaho.com/schema http://mondrian.pentaho.com/schema/mondrian.xsd">
+
+	<!-- 物理模型 -->
+	<PhysicalSchema>
+		<Query alias="v_date" keyColumn="id">
+			<ExpressionView>
+				<SQL dialect="mysql"><![CDATA[SELECT * FROM dim_date WHERE id >= 20160302 AND id <= CURDATE()]]></SQL>
+			</ExpressionView>
+		</Query>
+		<Table name="dim_cohort" keyColumn="id" />
+		<Table name="dim_channel" keyColumn="channel_code" />
+		<Table name="fact_new_adv_n" />
+		<Table name="fact_active_adv_n" />
+		<Table name="agg_new_adv_n_l_1" />
+		<Table name="agg_new_adv_n_l_2" />
+		<Table name="agg_new_adv_n_l_3" />
+		<Table name="agg_new_adv_n_l_4" />
+		<Table name="agg_new_adv_n_l_5" />
+		<Table name="agg_new_adv_n_l_6" />
+		<Table name="agg_new_adv_n_l_7" />
+		<Table name="agg_active_adv_n_l_1" />
+		<Table name="agg_active_adv_n_l_2" />
+		<Table name="agg_active_adv_n_l_3" />
+		<Table name="agg_active_adv_n_l_4" />
+	</PhysicalSchema>
+
+	<!-- 逻辑模型 -->
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" table="v_date" key="Date" type="TIME" caption="%{date}">
+		<Attributes>
+			<Attribute name="Year" keyColumn="the_year" levelType="TimeYears" hasHierarchy="false" />
+			<Attribute name="Quarter" levelType="TimeQuarters" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="the_quarter" />
+				</Key>
+				<Name>
+					<Column name="the_quarter" />
+				</Name>
+			</Attribute>
+			<Attribute name="Month" levelType="TimeMonths" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="month_of_year" />
+				</Key>
+				<Name>
+					<Column name="month_of_year" />
+				</Name>
+			</Attribute>
+			<Attribute name="Day" keyColumn="id" nameColumn="day_of_month" levelType="TimeDays" hasHierarchy="false" orderByColumn="id" />
+			<Attribute name="Date" keyColumn="id" nameColumn="the_date" hasHierarchy="false" />
+		</Attributes>
+		<Hierarchies>
+			<Hierarchy name="Monthly">
+				<Level attribute="Year" caption="%{year}" />
+				<Level attribute="Quarter" caption="%{quarter}" />
+				<Level attribute="Month" caption="%{month}" />
+				<Level attribute="Day" caption="%{day}" />
+			</Hierarchy>
+			<Hierarchy name="Daily">
+				<Level attribute="Date" caption="%{date}" />
+			</Hierarchy>
+		</Hierarchies>
+	</Dimension>
+
+	<!-- 日期间隔维度 -->
+	<Dimension name="DateDiff" table="dim_cohort" key="Day" caption="%{date_diff}">
+		<Attributes>
+			<Attribute name="Day" keyColumn="id" caption="%{day_diff}" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 次数维度 -->
+	<Dimension name="Times" table="dim_cohort" key="Id">
+		<Attributes>
+			<Attribute name="Range" keyColumn="times" nameColumn="times_desc" caption="%{times_range}" />
+			<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 渠道维度 -->
+	<Dimension name="Channel" table="dim_channel" key="Code" caption="%{channel}">
+		<Attributes>
+			<Attribute name="Name" keyColumn="channel_name" hasHierarchy="false" />
+			<Attribute name="Code" keyColumn="channel_code" hasHierarchy="false" />
+		</Attributes>
+		<Hierarchies>
+			<Hierarchy name="Channel">
+				<Level attribute="Name" caption="%{name}" />
+				<Level attribute="Code" caption="%{code}" />
+			</Hierarchy>
+		</Hierarchies>
+	</Dimension>
+
+	<!-- 新增用户Cube -->
+	<Cube name="NewUser" caption="%{new_user}">
+		<Dimensions>
+			<Dimension source="Date" caption="%{create_date}" />
+			<Dimension source="Channel" />
+
+			<Dimension name="Region" table="fact_new_adv_n" caption="%{region}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="area" caption="%{name}" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_new_adv_n" name="%{base_group}">
+				<Measures>
+					<!-- 新增用户 -->
+					<Measure name="New User Count" column="id" aggregator="count" formatString="#,###" caption="%{new_user}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<FactLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<!-- 聚合表 -->
+			<MeasureGroup table="agg_new_adv_n_l_1" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_new_adv_n_l_2" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<NoLink dimension="Date" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<NoLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_new_adv_n_l_3" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<NoLink dimension="Date" />
+					<NoLink dimension="Channel" />
+					<CopyLink dimension="Region">
+						<Column name="area" table="fact_new_adv_n" aggColumn="area" />
+					</CopyLink>
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_new_adv_n_l_4" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<NoLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_new_adv_n_l_5" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<NoLink dimension="Channel" />
+					<CopyLink dimension="Region">
+						<Column name="area" table="fact_new_adv_n" aggColumn="area" />
+					</CopyLink>
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_new_adv_n_l_6" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<NoLink dimension="Date" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<CopyLink dimension="Region">
+						<Column name="area" table="fact_new_adv_n" aggColumn="area" />
+					</CopyLink>
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_new_adv_n_l_7" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="New User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="Date" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<CopyLink dimension="Region">
+						<Column name="area" table="fact_new_adv_n" aggColumn="area" />
+					</CopyLink>
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+	</Cube>
+
+	<!-- 活跃用户Cube -->
+	<Cube name="ActiveUser" caption="%{active_user}">
+		<Dimensions>
+			<Dimension name="ActiveDate" source="Date" caption="%{active_date}" />
+			<Dimension source="DateDiff" visible="false" />
+			<Dimension source="Channel" />
+
+			<Dimension name="Region" table="fact_active_adv_n" caption="%{region}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="area" caption="%{name}" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_active_adv_n" name="%{base_group}">
+				<Measures>
+					<!-- 活跃用户 -->
+					<Measure name="Active User Count" column="id" aggregator="count" caption="%{active_user}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="ActiveDate" foreignKeyColumn="active_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<FactLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_active_adv_n_l_1" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="Active User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="ActiveDate" foreignKeyColumn="active_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_active_adv_n_l_2" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="Active User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="ActiveDate" foreignKeyColumn="active_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<NoLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_active_adv_n_l_3" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="Active User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="ActiveDate" foreignKeyColumn="active_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<NoLink dimension="Channel" />
+					<CopyLink dimension="Region">
+						<Column name="area" table="fact_active_adv_n" aggColumn="area" />
+					</CopyLink>
+				</DimensionLinks>
+			</MeasureGroup>
+			<MeasureGroup table="agg_active_adv_n_l_4" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="Active User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="ActiveDate" foreignKeyColumn="active_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<CopyLink dimension="Region">
+						<Column name="area" table="fact_active_adv_n" aggColumn="area" />
+					</CopyLink>
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<!-- 新增用户 -->
+			<CalculatedMember name="New User Count" dimension="Measures" formatString="#,###" caption="%{new_user}">
+				<Formula>[DateDiff].[Day].[0]</Formula>
+			</CalculatedMember>
+			<!-- 新增用户占比 -->
+			<CalculatedMember name="New User Percent" dimension="Measures" formatString="Percent" caption="%{new_user_pct}">
+				<Formula>[Measures].[New User Count] / [Measures].[Active User Count]</Formula>
+			</CalculatedMember>
+			<!-- 累计用户 -->
+			<CalculatedMember name="Addup User Count" dimension="Measures" formatString="#,###" caption="%{addup_user}">
+				<Formula>Aggregate(CrossJoin([DateDiff].[Day].[0], [ActiveDate].[Daily].[2016-03-02] : [ActiveDate].[Daily].CurrentMember))</Formula>
+			</CalculatedMember>
+			<!-- 活跃用户/累计用户 -->
+			<CalculatedMember name="Active Addup Pct" dimension="Measures" formatString="Percent" caption="%{active_addup_pct}">
+				<Formula>[Measures].[Active User Count] / [Measures].[Addup User Count]</Formula>
+			</CalculatedMember>
+			<!-- 历史新增活跃 -->
+			<CalculatedMember name="Hisnew Active Count" dimension="Measures" formatString="#,###" caption="%{hisnew_active_cnt}">
+				<Formula>Iif([Measures].[Active User Count] > [Measures].[New User Count], [Measures].[Active User Count] - [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 历史新增活跃/历史累计用户 -->
+			<CalculatedMember name="Active Addup Pct 2" dimension="Measures" formatString="Percent" caption="%{active_addup_pct2}">
+				<Formula>Iif([Measures].[Hisnew Active Count] > 0, [Measures].[Hisnew Active Count] / ([Measures].[Addup User Count] - [Measures].[New User Count]), NULL)</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+	</Cube>
+
+	<!-- 留存用户Cube -->
+	<Cube name="KeepUser" caption="%{keep_user}">
+		<Dimensions>
+			<Dimension name="CreateDate" source="Date" caption="%{create_date}" />
+			<Dimension source="DateDiff" visible="false" />
+			<Dimension source="Channel" />
+
+			<Dimension name="Region" table="fact_active_adv_n" caption="%{region}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="area" caption="%{name}" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_active_adv_n" name="%{base_group}">
+				<Measures>
+					<!-- 活跃用户 -->
+					<Measure name="Active User Count" column="id" aggregator="count" visible="false" caption="%{active_user}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="CreateDate" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<FactLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_active_adv_n_l_1" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="Active User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="CreateDate" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<NoLink dimension="Channel" />
+					<NoLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_active_adv_n_l_2" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="Active User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="CreateDate" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<NoLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_active_adv_n_l_3" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="Active User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="CreateDate" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<NoLink dimension="Channel" />
+					<CopyLink dimension="Region">
+						<Column name="area" table="fact_active_adv_n" aggColumn="area" />
+					</CopyLink>
+				</DimensionLinks>
+			</MeasureGroup>
+
+			<MeasureGroup table="agg_active_adv_n_l_4" type="aggregate">
+				<Measures>
+					<MeasureRef name="Fact Count" aggColumn="fact_count" />
+					<MeasureRef name="Active User Count" aggColumn="fact_count" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="CreateDate" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<CopyLink dimension="Region">
+						<Column name="area" table="fact_active_adv_n" aggColumn="area" />
+					</CopyLink>
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<!-- 新增用户 -->
+			<CalculatedMember name="New User Count" dimension="Measures" formatString="#,###" caption="%{new_user}">
+				<Formula>[DateDiff].[Day].[0]</Formula>
+			</CalculatedMember>
+			<!-- 次日留存率 -->
+			<CalculatedMember name="Keep User Rate 1" dimension="Measures" caption="%{keep_rate_1}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[1] / [Measures].[New User Count], NULL)</Formula>
+				<CalculatedMemberProperty name="FORMAT_STRING" expression="Iif([Measures].[Keep User Rate 1] &lt; 0.2, '|0.00%|style=green', '|0.00%|style=red')" />
+			</CalculatedMember>
+			<!-- 2日留存率 -->
+			<CalculatedMember name="Keep User Rate 2" dimension="Measures" formatString="Percent" caption="%{keep_rate_2}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[2] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 3日留存率 -->
+			<CalculatedMember name="Keep User Rate 3" dimension="Measures" formatString="Percent" caption="%{keep_rate_3}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[3] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 4日留存率 -->
+			<CalculatedMember name="Keep User Rate 4" dimension="Measures" formatString="Percent" caption="%{keep_rate_4}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[4] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 5日留存率 -->
+			<CalculatedMember name="Keep User Rate 5" dimension="Measures" formatString="Percent" caption="%{keep_rate_5}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[5] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 6日留存率 -->
+			<CalculatedMember name="Keep User Rate 6" dimension="Measures" formatString="Percent" caption="%{keep_rate_6}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[6] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 7日留存率 -->
+			<CalculatedMember name="Keep User Rate 7" dimension="Measures" formatString="Percent" caption="%{keep_rate_7}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[7] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 30日留存率 -->
+			<CalculatedMember name="Keep User Rate 30" dimension="Measures" formatString="Percent" caption="%{keep_rate_30}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[30] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 60日留存率 -->
+			<CalculatedMember name="Keep User Rate 60" dimension="Measures" formatString="Percent" caption="%{keep_rate_60}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[60] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 90日留存率 -->
+			<CalculatedMember name="Keep User Rate 90" dimension="Measures" formatString="Percent" caption="%{keep_rate_90}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[90] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 180日留存率 -->
+			<CalculatedMember name="Keep User Rate 180" dimension="Measures" formatString="Percent" caption="%{keep_rate_180}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[180] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 360日留存率 -->
+			<CalculatedMember name="Keep User Rate 360" dimension="Measures" formatString="Percent" caption="%{keep_rate_360}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[360] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+	</Cube>
+
+	<!-- 留存用户Cube2 -->
+	<Cube name="KeepUser2" caption="%{keep_user2}">
+		<Dimensions>
+			<Dimension name="CreateDate" source="Date" caption="%{create_date}" />
+			<Dimension source="DateDiff" visible="false" />
+			<Dimension source="Channel" />
+
+			<Dimension name="Region" table="fact_active_adv_n" caption="%{region}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="area" caption="%{name}" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_active_adv_n" name="%{base_group}">
+				<Measures>
+					<!-- 活跃用户 -->
+					<Measure name="Active User Count" column="id" aggregator="distinct-count" visible="false" caption="%{active_user}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="CreateDate" foreignKeyColumn="create_date" />
+					<ForeignKeyLink dimension="DateDiff" foreignKeyColumn="date_diff" />
+					<ForeignKeyLink dimension="Channel" foreignKeyColumn="channel_code" />
+					<FactLink dimension="Region" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<!-- 新增用户 -->
+			<CalculatedMember name="New User Count" dimension="Measures" formatString="#,###" caption="%{new_user}">
+				<Formula>[DateDiff].[Day].[0]</Formula>
+			</CalculatedMember>
+			<!-- 次日留存率 -->
+			<CalculatedMember name="Keep User Rate 1" dimension="Measures" caption="%{keep_rate_1}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[1] / [Measures].[New User Count], NULL)</Formula>
+				<CalculatedMemberProperty name="FORMAT_STRING" expression="Iif([Measures].[Keep User Rate 1] &lt; 0.2, '|0.00%|style=green', '|0.00%|style=red')" />
+			</CalculatedMember>
+			<!-- 2日留存率 -->
+			<CalculatedMember name="Keep User Rate 2" dimension="Measures" formatString="Percent" caption="%{keep_rate_2}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[2] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 3日留存率 -->
+			<CalculatedMember name="Keep User Rate 3" dimension="Measures" formatString="Percent" caption="%{keep_rate_3}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[3] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 4日留存率 -->
+			<CalculatedMember name="Keep User Rate 4" dimension="Measures" formatString="Percent" caption="%{keep_rate_4}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[4] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 5日留存率 -->
+			<CalculatedMember name="Keep User Rate 5" dimension="Measures" formatString="Percent" caption="%{keep_rate_5}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[5] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 6日留存率 -->
+			<CalculatedMember name="Keep User Rate 6" dimension="Measures" formatString="Percent" caption="%{keep_rate_6}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[6] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 7日留存率 -->
+			<CalculatedMember name="Keep User Rate 7" dimension="Measures" formatString="Percent" caption="%{keep_rate_7}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[7] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 30日留存率 -->
+			<CalculatedMember name="Keep User Rate 30" dimension="Measures" formatString="Percent" caption="%{keep_rate_30}">
+				<Formula>Iif([Measures].[New User Count] > 0, [DateDiff].[Day].[30] / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 3日内留存率 -->
+			<CalculatedMember name="Keep User Rate In 3" dimension="Measures" formatString="Percent" caption="%{keep_rate_in3}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[3]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 7日内留存率 -->
+			<CalculatedMember name="Keep User Rate In 7" dimension="Measures" formatString="Percent" caption="%{keep_rate_in7}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[7]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 14日内留存率 -->
+			<CalculatedMember name="Keep User Rate In 14" dimension="Measures" formatString="Percent" caption="%{keep_rate_in14}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[14]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+			<!-- 30日内留存率 -->
+			<CalculatedMember name="Keep User Rate In 30" dimension="Measures" formatString="Percent" caption="%{keep_rate_in30}">
+				<Formula>Iif([Measures].[New User Count] > 0, Aggregate([DateDiff].[Day].[1] : [DateDiff].[Day].[30]) / [Measures].[New User Count], NULL)</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+	</Cube>
+
+	<Role name="ROLE_USER">
+		<SchemaGrant access="none" />
+	</Role>
+	<Role name="ROLE_ADMIN">
+		<SchemaGrant access="all" />
+	</Role>
+
+</Schema>

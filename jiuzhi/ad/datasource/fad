@@ -1,0 +1,8 @@
+type=OLAP
+name=fad
+driver=mondrian.olap4j.MondrianOlap4jDriver
+location=jdbc:mondrian:Jdbc=jdbc:mysql://157.255.237.135:17106/fad_dw;Catalog=mondrian:///datasources/fad.xml;DynamicSchemaProcessor=mondrian.i18n.LocalizingDynamicSchemaProcessor;Locale=zh_CN;UseContentChecksum=true
+username=root
+password=Zv7oBWPoiOyLOwoh@a124d6446
+security.enabled=true
+security.type=one2one

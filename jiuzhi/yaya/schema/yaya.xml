@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema name="%{yaya}" metamodelVersion="4.0" xmlns="http://mondrian.pentaho.com/schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://mondrian.pentaho.com/schema http://mondrian.pentaho.com/schema/mondrian.xsd">
+
+	<!-- 物理模型 -->
+	<PhysicalSchema>
+		<Query alias="v_date" keyColumn="id">
+			<ExpressionView>
+				<SQL dialect="mysql"><![CDATA[SELECT * FROM dim_date WHERE id >= 20151219 AND id <= CURDATE()]]></SQL>
+			</ExpressionView>
+		</Query>
+		<Table name="dim_info" keyColumn="id">
+			<ColumnDefs>
+				<CalculatedColumnDef name="type_name">
+					<ExpressionView>
+						<SQL dialect="mysql">CASE content_type WHEN 0 THEN '资讯' WHEN 1 THEN '视频' ELSE '其他' END</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+			</ColumnDefs>
+		</Table>
+		<Table name="dim_info_cat" keyColumn="id">
+			<ColumnDefs>
+				<CalculatedColumnDef name="type_name">
+					<ExpressionView>
+						<SQL dialect="mysql">CASE content_type WHEN 0 THEN '资讯' WHEN 1 THEN '视频' ELSE '其他' END</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+			</ColumnDefs>
+		</Table>
+		<Link source="dim_info_cat" target="dim_info" foreignKeyColumn="category_id" />
+		<Table name="fact_info" />
+		<Table name="fact_info_detail">
+			<ColumnDefs>
+				<ColumnDef name="id" type="Integer" internalType="long" />
+				<CalculatedColumnDef name="type_name">
+					<ExpressionView>
+						<SQL dialect="mysql">CASE fact_info_detail.content_type WHEN 0 THEN '资讯' WHEN 1 THEN '视频' ELSE '其他' END</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+				<CalculatedColumnDef name="platform_name">
+					<ExpressionView>
+						<SQL dialect="mysql">CASE source_platform WHEN 1 THEN '自媒体' WHEN 2 THEN '其他' ELSE '牙牙资讯' END</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+				<CalculatedColumnDef name="index_name">
+					<ExpressionView>
+						<SQL dialect="mysql">IF(is_index = 1, '是', '否')</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+				<CalculatedColumnDef name="push_name">
+					<ExpressionView>
+						<SQL dialect="mysql">IF(is_push = 1, '是', '否')</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+			</ColumnDefs>
+		</Table>
+		<Table name="fact_info_cat">
+			<ColumnDefs>
+				<CalculatedColumnDef name="user_pct">
+					<ExpressionView>
+						<SQL dialect="generic">sub_count / total_count</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+			</ColumnDefs>
+		</Table>
+		<Table name="fact_interact">
+			<ColumnDefs>
+				<ColumnDef name="id" type="Integer" internalType="long" />
+			</ColumnDefs>
+		</Table>
+		<Table name="stat_star" />
+		<Table name="stat_search">
+			<ColumnDefs>
+				<CalculatedColumnDef name="search_pct">
+					<ExpressionView>
+						<SQL dialect="generic">search_count / all_count</SQL>
+					</ExpressionView>
+				</CalculatedColumnDef>
+			</ColumnDefs>
+		</Table>
+	</PhysicalSchema>
+
+	<!-- 逻辑模型 -->
+	<!-- 共享维度 -->
+	<!-- 日期维度 -->
+	<Dimension name="Date" table="v_date" key="Date" type="TIME" caption="%{date}">
+		<Attributes>
+			<Attribute name="Year" keyColumn="the_year" levelType="TimeYears" hasHierarchy="false" />
+			<Attribute name="HalfYear" levelType="TimeHalfYear" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="half_year" />
+				</Key>
+				<Name>
+					<Column name="half_year" />
+				</Name>
+			</Attribute>
+			<Attribute name="Quarter" levelType="TimeQuarters" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="quarter_num" />
+				</Key>
+				<Name>
+					<Column name="en_quarter" />
+				</Name>
+			</Attribute>
+			<Attribute name="Month" levelType="TimeMonths" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="month_num" />
+				</Key>
+				<Name>
+					<Column name="month_num" />
+				</Name>
+			</Attribute>
+			<Attribute name="Week" levelType="TimeWeeks" hasHierarchy="false">
+				<Key>
+					<Column name="the_year" />
+					<Column name="week_num" />
+				</Key>
+				<Name>
+					<Column name="week_num" />
+				</Name>
+			</Attribute>
+			<Attribute name="Day" keyColumn="id" nameColumn="day_num" levelType="TimeDays" hasHierarchy="false" />
+			<Attribute name="Date" keyColumn="id" nameColumn="the_day" hasHierarchy="false" />
+		</Attributes>
+		<Hierarchies>
+			<Hierarchy name="Monthly">
+				<Level attribute="Year" caption="%{year}" />
+				<Level attribute="HalfYear" caption="%{half_year}" />
+				<Level attribute="Quarter" caption="%{quarter}" />
+				<Level attribute="Month" caption="%{month}" />
+				<Level attribute="Day" caption="%{day}" />
+			</Hierarchy>
+			<Hierarchy name="Daily">
+				<Level attribute="Date" caption="%{date}" />
+			</Hierarchy>
+		</Hierarchies>
+	</Dimension>
+
+	<!-- 资讯维度 -->
+	<Dimension name="Info" table="dim_info" key="Id" caption="%{info}">
+		<Attributes>
+			<Attribute name="Type" keyColumn="content_type" nameColumn="type_name" caption="%{info_type}" />
+			<Attribute name="Category" table="dim_info_cat" keyColumn="id" nameColumn="name" caption="%{info_category}" />
+			<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 资讯分类维度 -->
+	<Dimension name="InfoCategory" table="dim_info_cat" key="Id" caption="%{info_category}">
+		<Attributes>
+			<Attribute name="Type" keyColumn="type_name" caption="%{info_type}" />
+			<Attribute name="Name" keyColumn="name" caption="%{category_name}" />
+			<Attribute name="Id" keyColumn="id" hasHierarchy="false" />
+		</Attributes>
+	</Dimension>
+
+	<!-- 资讯点击Cube -->
+	<Cube name="Info" caption="%{info}">
+		<Dimensions>
+			<Dimension name="StatDate" source="Date" caption="%{stat_date}" />
+			<Dimension name="PublishDate" source="Date" caption="%{publish_date}" />
+			<Dimension source="InfoCategory" />
+			<Dimension name="Info" table="fact_info_detail" key="Id" caption="%{info}">
+				<Attributes>
+					<Attribute name="Type" keyColumn="content_type" nameColumn="type_name" caption="%{info_type}" />
+					<Attribute name="SrcPlatform" keyColumn="source_platform" nameColumn="platform_name" caption="%{src_platform}" />
+					<Attribute name="Creater" keyColumn="create_by" caption="%{creater}" />
+					<Attribute name="Title" keyColumn="title" hasHierarchy="false" />
+					<Attribute name="Source" keyColumn="source" hasHierarchy="false" />
+					<Attribute name="IsIndex" keyColumn="index_name" hasHierarchy="false" />
+					<Attribute name="IsPush" keyColumn="push_name" hasHierarchy="false" />
+					<Attribute name="Id" keyColumn="id" caption="%{info_id}">
+						<Property attribute="Title" />
+						<Property attribute="Source" />
+						<Property attribute="IsIndex" />
+						<Property attribute="IsPush" />
+					</Attribute>
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_info_detail" name="%{base_group}">
+				<Measures>
+					<!-- 点击次数 -->
+					<Measure name="Click Times" column="click_count" aggregator="sum" formatString="#,###" caption="%{click_times}" />
+					<!-- 点击人数 -->
+					<Measure name="Click User Count" column="click_user" aggregator="sum" formatString="#,###" caption="%{click_users}" />
+					<!-- 评论次数 -->
+					<Measure name="Comment Times" column="comment_count" aggregator="sum" formatString="#,###" caption="%{comment_times}" />
+					<!-- 评论人数 -->
+					<Measure name="Comment User Count" column="comment_user" aggregator="sum" formatString="#,###" caption="%{comment_users}" />
+					<!-- 分享次数 -->
+					<Measure name="Share Times" column="share_count" aggregator="sum" formatString="#,###" caption="%{share_times}" />
+					<!-- 分享人数 -->
+					<Measure name="Share User Count" column="share_user" aggregator="sum" formatString="#,###" caption="%{share_users}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="StatDate" foreignKeyColumn="stat_date" />
+					<ForeignKeyLink dimension="PublishDate" foreignKeyColumn="publish_date" />
+					<ForeignKeyLink dimension="InfoCategory" foreignKeyColumn="category_id" />
+					<FactLink dimension="Info" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<CalculatedMember name="Info Title" dimension="Measures" caption="%{title}">
+				<Formula>[Info].[Id].CurrentMember.Properties('Title')</Formula>
+			</CalculatedMember>
+			<CalculatedMember name="Info Source" dimension="Measures" caption="%{source}">
+				<Formula>[Info].[Id].CurrentMember.Properties('Source')</Formula>
+			</CalculatedMember>
+			<CalculatedMember name="Info IsIndex" dimension="Measures" caption="%{is_index}">
+				<Formula>[Info].[Id].CurrentMember.Properties('IsIndex')</Formula>
+			</CalculatedMember>
+			<CalculatedMember name="Info IsPush" dimension="Measures" caption="%{is_push}">
+				<Formula>[Info].[Id].CurrentMember.Properties('IsPush')</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+	</Cube>
+
+	<!-- 资讯点击分类Cube -->
+	<Cube name="InfoCategory" caption="%{info_category}">
+		<Dimensions>
+			<Dimension name="StatDate" source="Date" caption="%{stat_date}" />
+			<Dimension name="Info" source="Info" caption="%{info}" />
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_info" name="%{base_group}">
+				<Measures>
+					<Measure name="User Count" column="deviceid" aggregator="distinct-count" formatString="#,###" caption="%{user_count}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="StatDate" foreignKeyColumn="stat_date" />
+					<ForeignKeyLink dimension="Info" foreignKeyColumn="id" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<CalculatedMember name="User Percent" dimension="Measures" formatString="Percent" caption="%{user_pct}">
+				<Formula>[Info].[Category].CurrentMember / [Info].[Category].CurrentMember.Parent</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+	</Cube>
+
+	<!-- 资讯标签点击Cube -->
+	<Cube name="InfoTag" caption="%{info_tag}">
+		<Dimensions>
+			<Dimension name="StatDate" source="Date" caption="%{stat_date}" />
+			<Dimension name="InfoCategory" source="InfoCategory" />
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_info_cat" name="%{base_group}">
+				<Measures>
+					<Measure name="User Count" column="sub_count" aggregator="sum" formatString="#,###" caption="%{user_count}" />
+					<Measure name="User Percent" column="user_pct" aggregator="sum" formatString="Percent" caption="%{user_pct}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="StatDate" foreignKeyColumn="stat_date" />
+					<ForeignKeyLink dimension="InfoCategory" foreignKeyColumn="acc" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+	</Cube>
+
+	<!-- 活动Cube -->
+	<Cube name="Interact" caption="%{interact}">
+		<Dimensions>
+			<Dimension name="StatDate" source="Date" caption="%{stat_date}" />
+			<Dimension name="StartDate" source="Date" caption="%{start_date}" />
+			<Dimension name="EndDate" source="Date" caption="%{end_date}" />
+
+			<Dimension name="Interact" table="fact_interact" key="Id" caption="%{interact}">
+				<Attributes>
+					<Attribute name="Id" keyColumn="id" caption="%{interact_id}">
+						<Property attribute="Title" />
+					</Attribute>
+					<Attribute name="Title" keyColumn="title" hasHierarchy="false" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="fact_interact" name="%{base_group}">
+				<Measures>
+					<!-- 点击次数 -->
+					<Measure name="Click Times" column="click_count" aggregator="sum" formatString="#,###" caption="%{click_times}" />
+					<!-- 点击人数 -->
+					<Measure name="Click User Count" column="click_user" aggregator="sum" formatString="#,###" caption="%{click_users}" />
+					<!-- 评论次数 -->
+					<Measure name="Comment Times" column="comment_count" aggregator="sum" formatString="#,###" caption="%{comment_times}" />
+					<!-- 评论人数 -->
+					<Measure name="Comment User Count" column="comment_user" aggregator="sum" formatString="#,###" caption="%{comment_users}" />
+					<!-- 分享次数 -->
+					<Measure name="Share Times" column="share_count" aggregator="sum" formatString="#,###" caption="%{share_times}" />
+					<!-- 分享人数 -->
+					<Measure name="Share User Count" column="share_user" aggregator="sum" formatString="#,###" caption="%{share_users}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="StatDate" foreignKeyColumn="stat_date" />
+					<ForeignKeyLink dimension="StartDate" foreignKeyColumn="start_date" />
+					<ForeignKeyLink dimension="EndDate" foreignKeyColumn="end_date" />
+					<FactLink dimension="Interact" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+
+		<CalculatedMembers>
+			<CalculatedMember name="Interact Title" dimension="Measures" caption="%{title}">
+				<Formula>[Interact].[Id].CurrentMember.Properties('Title')</Formula>
+			</CalculatedMember>
+		</CalculatedMembers>
+	</Cube>
+
+	<!-- 明星Cube -->
+	<Cube name="Star" caption="%{star}">
+		<Dimensions>
+			<Dimension name="StatDate" source="Date" caption="%{stat_date}" />
+
+			<Dimension name="Star" table="stat_star" key="Id" caption="%{star}">
+				<Attributes>
+					<Attribute name="Name" keyColumn="real_name" caption="%{real_name}" />
+					<Attribute name="Id" keyColumn="star_id" hasHierarchy="false" />
+				</Attributes>
+			</Dimension>
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="stat_star" name="%{base_group}">
+				<Measures>
+					<!-- 点击次数 -->
+					<Measure name="Click Times" column="click_count" aggregator="sum" formatString="#,###" caption="%{click_times}" />
+					<!-- 点击人数 -->
+					<Measure name="Click User Count" column="click_user" aggregator="sum" formatString="#,###" caption="%{click_users}" />
+					<!-- 粉丝数 -->
+					<Measure name="Fans Count" column="fans_count" aggregator="sum" formatString="#,###" caption="%{fans_count}" />
+					<!-- 动态数 -->
+					<Measure name="Dynamic Count" column="dynamic_num" aggregator="sum" formatString="#,###" caption="%{dynamic_count}" />
+					<!-- 帖子数 -->
+					<Measure name="Post Count" column="post_count" aggregator="sum" formatString="#,###" caption="%{post_count}" />
+					<!-- 评论数 -->
+					<Measure name="Comment Count" column="comment_count" aggregator="sum" formatString="#,###" caption="%{comment_count}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="StatDate" foreignKeyColumn="create_date" />
+					<FactLink dimension="Star" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+	</Cube>
+
+	<!-- 搜索用户Cube -->
+	<Cube name="SearchUser" caption="%{search_user}">
+		<Dimensions>
+			<Dimension name="StatDate" source="Date" caption="%{stat_date}" />
+		</Dimensions>
+
+		<MeasureGroups>
+			<MeasureGroup table="stat_search" name="%{base_group}">
+				<Measures>
+					<Measure name="Search User Count" column="search_count" aggregator="sum" formatString="#,###" caption="%{search_user_cnt}" />
+					<Measure name="Search User Percent" column="search_pct" aggregator="sum" formatString="Percent" caption="%{search_user_pct}" />
+				</Measures>
+				<DimensionLinks>
+					<ForeignKeyLink dimension="StatDate" foreignKeyColumn="stat_date" />
+				</DimensionLinks>
+			</MeasureGroup>
+		</MeasureGroups>
+	</Cube>
+
+	<!-- 角色权限 -->
+	<Role name="ROLE_ADOP">
+		<SchemaGrant access="none" />
+	</Role>
+	<Role name="ROLE_ADOPN">
+		<SchemaGrant access="none" />
+	</Role>
+
+</Schema>
